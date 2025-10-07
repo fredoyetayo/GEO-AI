@@ -49,17 +49,22 @@ trait Encryption {
      *
      * @param string $value Value to encrypt.
      * @return string
+     * @throws \Exception If encryption fails.
      */
     protected function encrypt( $value ) {
         if ( empty( $value ) ) {
             return '';
         }
 
-        if ( $this->is_sodium_available() ) {
-            return $this->encrypt_sodium( $value );
-        }
+        try {
+            if ( $this->is_sodium_available() ) {
+                return $this->encrypt_sodium( $value );
+            }
 
-        return $this->encrypt_fallback( $value );
+            return $this->encrypt_fallback( $value );
+        } catch ( \Exception $e ) {
+            throw new \Exception( 'Encryption failed: ' . $e->getMessage() );
+        }
     }
 
     /**
@@ -67,17 +72,22 @@ trait Encryption {
      *
      * @param string $encrypted Encrypted value.
      * @return string
+     * @throws \Exception If decryption fails.
      */
     protected function decrypt( $encrypted ) {
         if ( empty( $encrypted ) ) {
             return '';
         }
 
-        if ( $this->is_sodium_available() ) {
-            return $this->decrypt_sodium( $encrypted );
-        }
+        try {
+            if ( $this->is_sodium_available() ) {
+                return $this->decrypt_sodium( $encrypted );
+            }
 
-        return $this->decrypt_fallback( $encrypted );
+            return $this->decrypt_fallback( $encrypted );
+        } catch ( \Exception $e ) {
+            throw new \Exception( 'Decryption failed: ' . $e->getMessage() );
+        }
     }
 
     /**
@@ -85,17 +95,29 @@ trait Encryption {
      *
      * @param string $value Value to encrypt.
      * @return string
+     * @throws \Exception If sodium encryption fails.
      */
     private function encrypt_sodium( $value ) {
-        $key   = hex2bin( $this->get_encryption_key() );
-        $nonce = random_bytes( SODIUM_CRYPTO_SECRETBOX_NONCEBYTES );
+        try {
+            $key   = hex2bin( $this->get_encryption_key() );
+            if ( false === $key ) {
+                throw new \Exception( 'Invalid encryption key format' );
+            }
 
-        $encrypted = sodium_crypto_secretbox( $value, $nonce, $key );
-        $result    = base64_encode( $nonce . $encrypted );
+            $nonce = random_bytes( SODIUM_CRYPTO_SECRETBOX_NONCEBYTES );
+            $encrypted = sodium_crypto_secretbox( $value, $nonce, $key );
+            
+            if ( false === $encrypted ) {
+                throw new \Exception( 'Sodium encryption failed' );
+            }
 
-        sodium_memzero( $key );
+            $result = base64_encode( $nonce . $encrypted );
+            sodium_memzero( $key );
 
-        return $result;
+            return $result;
+        } catch ( \Exception $e ) {
+            throw new \Exception( 'Sodium encryption error: ' . $e->getMessage() );
+        }
     }
 
     /**
@@ -103,22 +125,38 @@ trait Encryption {
      *
      * @param string $encrypted Encrypted value.
      * @return string
+     * @throws \Exception If sodium decryption fails.
      */
     private function decrypt_sodium( $encrypted ) {
-        $decoded = base64_decode( $encrypted );
-        if ( false === $decoded ) {
-            return '';
+        try {
+            $decoded = base64_decode( $encrypted, true );
+            if ( false === $decoded ) {
+                throw new \Exception( 'Invalid base64 encoding' );
+            }
+
+            $key = hex2bin( $this->get_encryption_key() );
+            if ( false === $key ) {
+                throw new \Exception( 'Invalid encryption key format' );
+            }
+
+            if ( strlen( $decoded ) < SODIUM_CRYPTO_SECRETBOX_NONCEBYTES ) {
+                throw new \Exception( 'Invalid encrypted data length' );
+            }
+
+            $nonce      = mb_substr( $decoded, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, '8bit' );
+            $ciphertext = mb_substr( $decoded, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, null, '8bit' );
+
+            $decrypted = sodium_crypto_secretbox_open( $ciphertext, $nonce, $key );
+            sodium_memzero( $key );
+
+            if ( false === $decrypted ) {
+                throw new \Exception( 'Decryption verification failed' );
+            }
+
+            return $decrypted;
+        } catch ( \Exception $e ) {
+            throw new \Exception( 'Sodium decryption error: ' . $e->getMessage() );
         }
-
-        $key        = hex2bin( $this->get_encryption_key() );
-        $nonce      = mb_substr( $decoded, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, '8bit' );
-        $ciphertext = mb_substr( $decoded, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, null, '8bit' );
-
-        $decrypted = sodium_crypto_secretbox_open( $ciphertext, $nonce, $key );
-
-        sodium_memzero( $key );
-
-        return false !== $decrypted ? $decrypted : '';
     }
 
     /**

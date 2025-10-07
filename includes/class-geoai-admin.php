@@ -48,11 +48,20 @@ class GeoAI_Admin {
     }
 
     public function register_settings() {
-        $settings = array(
+        // Register API key with sanitization callback
+        register_setting(
+            'geoai_settings',
             'geoai_api_key',
+            array(
+                'sanitize_callback' => array( $this, 'sanitize_api_key' ),
+            )
+        );
+
+        $settings = array(
             'geoai_autorun_on_save',
             'geoai_compat_mode',
             'geoai_titles_templates',
+            'geoai_meta_templates',
             'geoai_social_defaults',
             'geoai_schema_defaults',
             'geoai_sitemaps',
@@ -65,6 +74,44 @@ class GeoAI_Admin {
 
         foreach ( $settings as $setting ) {
             register_setting( 'geoai_settings', $setting );
+        }
+    }
+
+    /**
+     * Sanitize and encrypt API key.
+     *
+     * @param string $value The API key value.
+     * @return string
+     */
+    public function sanitize_api_key( $value ) {
+        if ( empty( $value ) ) {
+            return '';
+        }
+
+        $value = sanitize_text_field( $value );
+
+        // Check if the value is already encrypted (comparing with stored value)
+        $stored_key = get_option( 'geoai_api_key', '' );
+        if ( ! empty( $stored_key ) ) {
+            $decrypted_stored = $this->decrypt( $stored_key );
+            if ( $value === $decrypted_stored ) {
+                // Value hasn't changed, return existing encrypted value
+                return $stored_key;
+            }
+        }
+
+        // Encrypt the new value
+        try {
+            return $this->encrypt( $value );
+        } catch ( \Exception $e ) {
+            // Log error and return empty string to prevent crash
+            error_log( 'GEO AI: Error encrypting API key - ' . $e->getMessage() );
+            add_settings_error(
+                'geoai_api_key',
+                'encryption_error',
+                __( 'Error encrypting API key. Please check server configuration.', 'geo-ai' )
+            );
+            return '';
         }
     }
 
@@ -253,7 +300,18 @@ class GeoAI_Admin {
 
     private function render_general_tab() {
         $api_key          = get_option( 'geoai_api_key', '' );
-        $decrypted_key    = ! empty( $api_key ) ? $this->decrypt( $api_key ) : '';
+        $decrypted_key    = '';
+        
+        // Safely decrypt the API key
+        if ( ! empty( $api_key ) ) {
+            try {
+                $decrypted_key = $this->decrypt( $api_key );
+            } catch ( \Exception $e ) {
+                error_log( 'GEO AI: Error decrypting API key - ' . $e->getMessage() );
+                $decrypted_key = '';
+            }
+        }
+
         $autorun          = get_option( 'geoai_autorun_on_save', false );
         $compat_mode      = get_option( 'geoai_compat_mode', 'standalone' );
         ?>
@@ -294,65 +352,284 @@ class GeoAI_Admin {
             </tr>
         </table>
         <?php
-        // Handle API key encryption on save
-        if ( isset( $_POST['geoai_api_key'] ) && check_admin_referer( 'geoai_settings-options' ) ) {
-            $submitted_key = sanitize_text_field( wp_unslash( $_POST['geoai_api_key'] ) );
-            if ( ! empty( $submitted_key ) && $submitted_key !== $decrypted_key ) {
-                update_option( 'geoai_api_key', $this->encrypt( $submitted_key ) );
-            }
-        }
     }
 
     private function render_titles_tab() {
         $templates = get_option( 'geoai_titles_templates', array() );
+        $meta_templates = get_option( 'geoai_meta_templates', array() );
         ?>
         <h2><?php esc_html_e( 'Title & Meta Description Templates', 'geo-ai' ); ?></h2>
-        <p><?php esc_html_e( 'Available variables:', 'geo-ai' ); ?> <code>%%title%%</code>, <code>%%sitename%%</code>, <code>%%sep%%</code>, <code>%%excerpt%%</code>, <code>%%category%%</code>, <code>%%tag%%</code>, <code>%%date%%</code>, <code>%%modified%%</code>, <code>%%id%%</code>, <code>%%author%%</code></p>
         
-        <table class="form-table">
+        <div class="geoai-info-box geoai-info-primary">
+            <span class="dashicons dashicons-format-aside"></span>
+            <div>
+                <strong><?php esc_html_e( 'Search Engine Optimization', 'geo-ai' ); ?></strong>
+                <p><?php esc_html_e( 'Templates define how your titles and descriptions appear in search results. Well-optimized titles and descriptions can improve your click-through rate by 20-30%.', 'geo-ai' ); ?></p>
+            </div>
+        </div>
+
+        <div class="geoai-variables-box">
+            <h3 class="geoai-toggle-heading">
+                <span class="dashicons dashicons-arrow-down-alt2"></span>
+                <?php esc_html_e( 'Available Variables (Click to expand)', 'geo-ai' ); ?>
+            </h3>
+            <div class="geoai-variables-content" style="display: none;">
+                <div class="geoai-variables-grid">
+                    <div class="geoai-variable-item">
+                        <code>%%title%%</code>
+                        <span><?php esc_html_e( 'Post/page title', 'geo-ai' ); ?></span>
+                    </div>
+                    <div class="geoai-variable-item">
+                        <code>%%sitename%%</code>
+                        <span><?php esc_html_e( 'Site name', 'geo-ai' ); ?></span>
+                    </div>
+                    <div class="geoai-variable-item">
+                        <code>%%sep%%</code>
+                        <span><?php esc_html_e( 'Separator (|)', 'geo-ai' ); ?></span>
+                    </div>
+                    <div class="geoai-variable-item">
+                        <code>%%excerpt%%</code>
+                        <span><?php esc_html_e( 'Post excerpt', 'geo-ai' ); ?></span>
+                    </div>
+                    <div class="geoai-variable-item">
+                        <code>%%category%%</code>
+                        <span><?php esc_html_e( 'Primary category', 'geo-ai' ); ?></span>
+                    </div>
+                    <div class="geoai-variable-item">
+                        <code>%%tag%%</code>
+                        <span><?php esc_html_e( 'First tag', 'geo-ai' ); ?></span>
+                    </div>
+                    <div class="geoai-variable-item">
+                        <code>%%date%%</code>
+                        <span><?php esc_html_e( 'Publish date', 'geo-ai' ); ?></span>
+                    </div>
+                    <div class="geoai-variable-item">
+                        <code>%%author%%</code>
+                        <span><?php esc_html_e( 'Author name', 'geo-ai' ); ?></span>
+                    </div>
+                    <div class="geoai-variable-item">
+                        <code>%%sitedesc%%</code>
+                        <span><?php esc_html_e( 'Site description', 'geo-ai' ); ?></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h3><?php esc_html_e( 'Title Templates', 'geo-ai' ); ?></h3>
+        <table class="form-table geoai-template-table">
             <tr>
-                <th scope="row"><label><?php esc_html_e( 'Post Title', 'geo-ai' ); ?></label></th>
-                <td><input type="text" name="geoai_titles_templates[post]" value="<?php echo esc_attr( $templates['post'] ?? '%%title%% %%sep%% %%sitename%%' ); ?>" class="large-text" /></td>
+                <th scope="row">
+                    <label><?php esc_html_e( 'Post Title', 'geo-ai' ); ?></label>
+                    <span class="geoai-tooltip" data-tip="<?php esc_attr_e( 'Optimal length: 50-60 characters. Include your main keyword near the beginning.', 'geo-ai' ); ?>">
+                        <span class="dashicons dashicons-editor-help"></span>
+                    </span>
+                </th>
+                <td>
+                    <input type="text" name="geoai_titles_templates[post]" value="<?php echo esc_attr( $templates['post'] ?? '%%title%% %%sep%% %%sitename%%' ); ?>" class="large-text geoai-title-input" data-type="title" maxlength="70" />
+                    <div class="geoai-char-counter">
+                        <span class="geoai-char-count">0</span> / 60 <?php esc_html_e( 'characters', 'geo-ai' ); ?>
+                        <span class="geoai-status-indicator"></span>
+                    </div>
+                </td>
             </tr>
             <tr>
-                <th scope="row"><label><?php esc_html_e( 'Page Title', 'geo-ai' ); ?></label></th>
-                <td><input type="text" name="geoai_titles_templates[page]" value="<?php echo esc_attr( $templates['page'] ?? '%%title%% %%sep%% %%sitename%%' ); ?>" class="large-text" /></td>
+                <th scope="row">
+                    <label><?php esc_html_e( 'Page Title', 'geo-ai' ); ?></label>
+                    <span class="geoai-tooltip" data-tip="<?php esc_attr_e( 'Pages often target broader topics. Keep titles descriptive and clear.', 'geo-ai' ); ?>">
+                        <span class="dashicons dashicons-editor-help"></span>
+                    </span>
+                </th>
+                <td>
+                    <input type="text" name="geoai_titles_templates[page]" value="<?php echo esc_attr( $templates['page'] ?? '%%title%% %%sep%% %%sitename%%' ); ?>" class="large-text geoai-title-input" data-type="title" maxlength="70" />
+                    <div class="geoai-char-counter">
+                        <span class="geoai-char-count">0</span> / 60 <?php esc_html_e( 'characters', 'geo-ai' ); ?>
+                        <span class="geoai-status-indicator"></span>
+                    </div>
+                </td>
             </tr>
             <tr>
-                <th scope="row"><label><?php esc_html_e( 'Archive Title', 'geo-ai' ); ?></label></th>
-                <td><input type="text" name="geoai_titles_templates[archive]" value="<?php echo esc_attr( $templates['archive'] ?? '%%archive_title%% %%sep%% %%sitename%%' ); ?>" class="large-text" /></td>
+                <th scope="row">
+                    <label><?php esc_html_e( 'Archive Title', 'geo-ai' ); ?></label>
+                    <span class="geoai-tooltip" data-tip="<?php esc_attr_e( 'Used for category, tag, and author archives. Make it clear what content visitors will find.', 'geo-ai' ); ?>">
+                        <span class="dashicons dashicons-editor-help"></span>
+                    </span>
+                </th>
+                <td>
+                    <input type="text" name="geoai_titles_templates[archive]" value="<?php echo esc_attr( $templates['archive'] ?? '%%archive_title%% %%sep%% %%sitename%%' ); ?>" class="large-text geoai-title-input" data-type="title" maxlength="70" />
+                    <div class="geoai-char-counter">
+                        <span class="geoai-char-count">0</span> / 60 <?php esc_html_e( 'characters', 'geo-ai' ); ?>
+                        <span class="geoai-status-indicator"></span>
+                    </div>
+                </td>
             </tr>
             <tr>
-                <th scope="row"><label><?php esc_html_e( 'Homepage Title', 'geo-ai' ); ?></label></th>
-                <td><input type="text" name="geoai_titles_templates[home]" value="<?php echo esc_attr( $templates['home'] ?? '%%sitename%% %%sep%% %%sitedesc%%' ); ?>" class="large-text" /></td>
+                <th scope="row">
+                    <label><?php esc_html_e( 'Homepage Title', 'geo-ai' ); ?></label>
+                    <span class="geoai-tooltip" data-tip="<?php esc_attr_e( 'Your most important page! Make it compelling and include your main keywords.', 'geo-ai' ); ?>">
+                        <span class="dashicons dashicons-editor-help"></span>
+                    </span>
+                </th>
+                <td>
+                    <input type="text" name="geoai_titles_templates[home]" value="<?php echo esc_attr( $templates['home'] ?? '%%sitename%% %%sep%% %%sitedesc%%' ); ?>" class="large-text geoai-title-input" data-type="title" maxlength="70" />
+                    <div class="geoai-char-counter">
+                        <span class="geoai-char-count">0</span> / 60 <?php esc_html_e( 'characters', 'geo-ai' ); ?>
+                        <span class="geoai-status-indicator"></span>
+                    </div>
+                </td>
             </tr>
         </table>
+
+        <h3><?php esc_html_e( 'Meta Description Templates', 'geo-ai' ); ?></h3>
+        <table class="form-table geoai-template-table">
+            <tr>
+                <th scope="row">
+                    <label><?php esc_html_e( 'Post Description', 'geo-ai' ); ?></label>
+                    <span class="geoai-tooltip" data-tip="<?php esc_attr_e( 'Optimal length: 150-160 characters. Include a call-to-action and main keywords naturally.', 'geo-ai' ); ?>">
+                        <span class="dashicons dashicons-editor-help"></span>
+                    </span>
+                </th>
+                <td>
+                    <textarea name="geoai_meta_templates[post]" class="large-text geoai-desc-input" rows="3" maxlength="180"><?php echo esc_textarea( $meta_templates['post'] ?? '%%excerpt%%' ); ?></textarea>
+                    <div class="geoai-char-counter">
+                        <span class="geoai-char-count">0</span> / 160 <?php esc_html_e( 'characters', 'geo-ai' ); ?>
+                        <span class="geoai-status-indicator"></span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <label><?php esc_html_e( 'Page Description', 'geo-ai' ); ?></label>
+                </th>
+                <td>
+                    <textarea name="geoai_meta_templates[page]" class="large-text geoai-desc-input" rows="3" maxlength="180"><?php echo esc_textarea( $meta_templates['page'] ?? '%%excerpt%%' ); ?></textarea>
+                    <div class="geoai-char-counter">
+                        <span class="geoai-char-count">0</span> / 160 <?php esc_html_e( 'characters', 'geo-ai' ); ?>
+                        <span class="geoai-status-indicator"></span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="geoai-info-box geoai-info-success">
+            <span class="dashicons dashicons-lightbulb"></span>
+            <div>
+                <strong><?php esc_html_e( 'SEO Best Practices', 'geo-ai' ); ?></strong>
+                <ul style="margin: 10px 0 0 20px;">
+                    <li><?php esc_html_e( 'Keep titles between 50-60 characters to avoid truncation in search results', 'geo-ai' ); ?></li>
+                    <li><?php esc_html_e( 'Place important keywords at the beginning of titles for better ranking', 'geo-ai' ); ?></li>
+                    <li><?php esc_html_e( 'Meta descriptions should be 150-160 characters - compelling and actionable', 'geo-ai' ); ?></li>
+                    <li><?php esc_html_e( 'Include your brand name (%%sitename%%) for brand recognition', 'geo-ai' ); ?></li>
+                    <li><?php esc_html_e( 'Write unique descriptions - avoid duplicates across pages', 'geo-ai' ); ?></li>
+                    <li><?php esc_html_e( 'Use action words: "Learn", "Discover", "Find out", "Get started"', 'geo-ai' ); ?></li>
+                </ul>
+            </div>
+        </div>
         <?php
     }
 
     private function render_social_tab() {
-        $defaults = get_option( 'geoai_social_defaults', array() );
+        $defaults      = get_option( 'geoai_social_defaults', array() );
+        $og_image_id   = $defaults['og_image_id'] ?? 0;
+        $og_image_url  = $defaults['og_image'] ?? '';
+        $image_preview = '';
+
+        if ( $og_image_id ) {
+            $image_preview = wp_get_attachment_image( $og_image_id, 'medium', false, array( 'id' => 'geoai-og-preview' ) );
+        } elseif ( $og_image_url ) {
+            $image_preview = '<img id="geoai-og-preview" src="' . esc_url( $og_image_url ) . '" style="max-width: 400px; height: auto;" />';
+        }
         ?>
         <h2><?php esc_html_e( 'OpenGraph & Twitter Cards', 'geo-ai' ); ?></h2>
+        
+        <div class="geoai-info-box geoai-info-primary">
+            <span class="dashicons dashicons-info"></span>
+            <div>
+                <strong><?php esc_html_e( 'Social Media Optimization', 'geo-ai' ); ?></strong>
+                <p><?php esc_html_e( 'Control how your content appears when shared on Facebook, Twitter, LinkedIn, and other platforms. Good social previews increase click-through rates by up to 40%.', 'geo-ai' ); ?></p>
+            </div>
+        </div>
+
         <table class="form-table">
             <tr>
-                <th scope="row"><label><?php esc_html_e( 'Default OG Image', 'geo-ai' ); ?></label></th>
-                <td><input type="url" name="geoai_social_defaults[og_image]" value="<?php echo esc_url( $defaults['og_image'] ?? '' ); ?>" class="large-text" /></td>
+                <th scope="row">
+                    <label><?php esc_html_e( 'Default OG Image', 'geo-ai' ); ?></label>
+                    <span class="geoai-tooltip" data-tip="<?php esc_attr_e( 'This image appears when your content is shared on social media. Recommended: 1200x630px, under 8MB, JPG or PNG format.', 'geo-ai' ); ?>">
+                        <span class="dashicons dashicons-editor-help"></span>
+                    </span>
+                </th>
+                <td>
+                    <div class="geoai-image-upload-wrap">
+                        <input type="hidden" id="geoai_og_image_id" name="geoai_social_defaults[og_image_id]" value="<?php echo esc_attr( $og_image_id ); ?>" />
+                        <input type="hidden" id="geoai_og_image_url" name="geoai_social_defaults[og_image]" value="<?php echo esc_url( $og_image_url ); ?>" />
+                        
+                        <div class="geoai-image-preview-container">
+                            <?php if ( $image_preview ) : ?>
+                                <div id="geoai-og-preview-wrap">
+                                    <?php echo $image_preview; ?>
+                                    <button type="button" class="button geoai-remove-image"><?php esc_html_e( 'Remove', 'geo-ai' ); ?></button>
+                                </div>
+                            <?php else : ?>
+                                <div id="geoai-og-preview-wrap" style="display: none;">
+                                    <img id="geoai-og-preview" src="" style="max-width: 400px; height: auto;" />
+                                    <button type="button" class="button geoai-remove-image"><?php esc_html_e( 'Remove', 'geo-ai' ); ?></button>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+
+                        <p>
+                            <button type="button" class="button button-secondary" id="geoai-upload-og-image">
+                                <span class="dashicons dashicons-cloud-upload"></span>
+                                <?php esc_html_e( 'Select Image from Library', 'geo-ai' ); ?>
+                            </button>
+                        </p>
+
+                        <div id="geoai-image-insights" style="display: none;" class="geoai-info-box geoai-info-secondary">
+                            <strong><?php esc_html_e( 'Image Insights', 'geo-ai' ); ?></strong>
+                            <ul id="geoai-image-insights-list"></ul>
+                        </div>
+                    </div>
+                </td>
             </tr>
             <tr>
-                <th scope="row"><label><?php esc_html_e( 'Twitter Card Type', 'geo-ai' ); ?></label></th>
+                <th scope="row">
+                    <label><?php esc_html_e( 'Twitter Card Type', 'geo-ai' ); ?></label>
+                    <span class="geoai-tooltip" data-tip="<?php esc_attr_e( 'Summary Large Image shows bigger previews and gets more engagement. Use Summary only if you prefer smaller images.', 'geo-ai' ); ?>">
+                        <span class="dashicons dashicons-editor-help"></span>
+                    </span>
+                </th>
                 <td>
                     <select name="geoai_social_defaults[tw_card]">
                         <option value="summary" <?php selected( $defaults['tw_card'] ?? 'summary_large_image', 'summary' ); ?>><?php esc_html_e( 'Summary', 'geo-ai' ); ?></option>
-                        <option value="summary_large_image" <?php selected( $defaults['tw_card'] ?? 'summary_large_image', 'summary_large_image' ); ?>><?php esc_html_e( 'Summary Large Image', 'geo-ai' ); ?></option>
+                        <option value="summary_large_image" <?php selected( $defaults['tw_card'] ?? 'summary_large_image', 'summary_large_image' ); ?>><?php esc_html_e( 'Summary Large Image (Recommended)', 'geo-ai' ); ?></option>
                     </select>
                 </td>
             </tr>
             <tr>
-                <th scope="row"><label><?php esc_html_e( 'Twitter Site Handle', 'geo-ai' ); ?></label></th>
-                <td><input type="text" name="geoai_social_defaults[tw_site]" value="<?php echo esc_attr( $defaults['tw_site'] ?? '' ); ?>" placeholder="@yoursite" class="regular-text" /></td>
+                <th scope="row">
+                    <label><?php esc_html_e( 'Twitter Site Handle', 'geo-ai' ); ?></label>
+                    <span class="geoai-tooltip" data-tip="<?php esc_attr_e( 'Your Twitter/X username. This appears in Twitter Cards and helps people find your account.', 'geo-ai' ); ?>">
+                        <span class="dashicons dashicons-editor-help"></span>
+                    </span>
+                </th>
+                <td>
+                    <input type="text" name="geoai_social_defaults[tw_site]" value="<?php echo esc_attr( $defaults['tw_site'] ?? '' ); ?>" placeholder="@yoursite" class="regular-text" />
+                </td>
             </tr>
         </table>
+
+        <div class="geoai-info-box geoai-info-success">
+            <span class="dashicons dashicons-yes-alt"></span>
+            <div>
+                <strong><?php esc_html_e( 'Best Practices', 'geo-ai' ); ?></strong>
+                <ul style="margin: 10px 0 0 20px;">
+                    <li><?php esc_html_e( 'OpenGraph Image: 1200x630px (1.91:1 ratio) for best results', 'geo-ai' ); ?></li>
+                    <li><?php esc_html_e( 'File size: Under 8MB, preferably under 1MB for fast loading', 'geo-ai' ); ?></li>
+                    <li><?php esc_html_e( 'Format: JPG or PNG (avoid WebP for compatibility)', 'geo-ai' ); ?></li>
+                    <li><?php esc_html_e( 'Include text overlay with your brand or key message', 'geo-ai' ); ?></li>
+                    <li><?php esc_html_e( 'Test your cards using Facebook Sharing Debugger and Twitter Card Validator', 'geo-ai' ); ?></li>
+                </ul>
+            </div>
+        </div>
         <?php
     }
 

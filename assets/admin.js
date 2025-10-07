@@ -26,6 +26,177 @@ jQuery(document).ready(function ($) {
         $(this).closest('tr').remove();
     });
 
+    // Media library for OG image
+    let mediaUploader;
+
+    $('#geoai-upload-og-image').on('click', function (e) {
+        e.preventDefault();
+
+        if (mediaUploader) {
+            mediaUploader.open();
+            return;
+        }
+
+        mediaUploader = wp.media({
+            title: 'Select OpenGraph Image',
+            button: {
+                text: 'Use this image'
+            },
+            multiple: false
+        });
+
+        mediaUploader.on('select', function () {
+            const attachment = mediaUploader.state().get('selection').first().toJSON();
+            
+            $('#geoai_og_image_id').val(attachment.id);
+            $('#geoai_og_image_url').val(attachment.url);
+            
+            $('#geoai-og-preview').attr('src', attachment.url);
+            $('#geoai-og-preview-wrap').show();
+
+            // Show image insights
+            showImageInsights(attachment);
+        });
+
+        mediaUploader.open();
+    });
+
+    // Remove OG image
+    $(document).on('click', '.geoai-remove-image', function (e) {
+        e.preventDefault();
+        $('#geoai_og_image_id').val('');
+        $('#geoai_og_image_url').val('');
+        $('#geoai-og-preview-wrap').hide();
+        $('#geoai-image-insights').hide();
+    });
+
+    // Show image insights and recommendations
+    function showImageInsights(attachment) {
+        const width = attachment.width;
+        const height = attachment.height;
+        const size = attachment.filesizeInBytes;
+        const ratio = (width / height).toFixed(2);
+        const idealRatio = 1.91;
+        const idealWidth = 1200;
+        const idealHeight = 630;
+
+        let insights = [];
+        let warnings = [];
+
+        // Check dimensions
+        if (width === idealWidth && height === idealHeight) {
+            insights.push('<li class="geoai-insight-good">✓ Perfect dimensions (1200x630px)</li>');
+        } else if (width >= idealWidth && ratio >= 1.85 && ratio <= 1.95) {
+            insights.push('<li class="geoai-insight-good">✓ Good dimensions (' + width + 'x' + height + 'px)</li>');
+        } else {
+            warnings.push('<li class="geoai-insight-warning">⚠ Recommended: 1200x630px (Current: ' + width + 'x' + height + 'px)</li>');
+        }
+
+        // Check aspect ratio
+        if (Math.abs(ratio - idealRatio) < 0.1) {
+            insights.push('<li class="geoai-insight-good">✓ Ideal aspect ratio (1.91:1)</li>');
+        } else {
+            warnings.push('<li class="geoai-insight-warning">⚠ Best ratio: 1.91:1 (Current: ' + ratio + ':1)</li>');
+        }
+
+        // Check file size
+        if (size < 1048576) { // Less than 1MB
+            insights.push('<li class="geoai-insight-good">✓ Good file size (' + formatBytes(size) + ')</li>');
+        } else if (size < 8388608) { // Less than 8MB
+            insights.push('<li class="geoai-insight-ok">○ File size: ' + formatBytes(size) + ' (acceptable, but could be optimized)</li>');
+        } else {
+            warnings.push('<li class="geoai-insight-error">✕ File too large: ' + formatBytes(size) + ' (Max: 8MB, Recommended: <1MB)</li>');
+        }
+
+        // Check format
+        const ext = attachment.filename.split('.').pop().toLowerCase();
+        if (ext === 'jpg' || ext === 'jpeg' || ext === 'png') {
+            insights.push('<li class="geoai-insight-good">✓ Good format (' + ext.toUpperCase() + ')</li>');
+        } else {
+            warnings.push('<li class="geoai-insight-warning">⚠ Recommended format: JPG or PNG (Current: ' + ext.toUpperCase() + ')</li>');
+        }
+
+        const allInsights = insights.concat(warnings);
+        $('#geoai-image-insights-list').html(allInsights.join(''));
+        $('#geoai-image-insights').show();
+    }
+
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    // Tooltip functionality
+    $('.geoai-tooltip').hover(
+        function () {
+            const tip = $(this).data('tip');
+            const tooltip = $('<div class="geoai-tooltip-content">' + tip + '</div>');
+            $('body').append(tooltip);
+            
+            const pos = $(this).offset();
+            tooltip.css({
+                top: pos.top - tooltip.outerHeight() - 10,
+                left: pos.left - (tooltip.outerWidth() / 2) + 10
+            });
+        },
+        function () {
+            $('.geoai-tooltip-content').remove();
+        }
+    );
+
+    // Toggle variables box
+    $('.geoai-toggle-heading').on('click', function () {
+        const content = $(this).next('.geoai-variables-content');
+        const icon = $(this).find('.dashicons');
+        
+        content.slideToggle();
+        icon.toggleClass('dashicons-arrow-down-alt2 dashicons-arrow-up-alt2');
+    });
+
+    // Character counters for title/meta inputs
+    function updateCharCounter(input) {
+        const $input = $(input);
+        const length = $input.val().length;
+        const $counter = $input.closest('td').find('.geoai-char-count');
+        const $indicator = $input.closest('td').find('.geoai-status-indicator');
+        const type = $input.hasClass('geoai-title-input') ? 'title' : 'desc';
+        
+        $counter.text(length);
+
+        // Update status indicator
+        if (type === 'title') {
+            if (length >= 50 && length <= 60) {
+                $indicator.html('<span class="geoai-status-good">✓ Perfect</span>');
+            } else if (length > 60 && length <= 70) {
+                $indicator.html('<span class="geoai-status-warning">⚠ Too long</span>');
+            } else if (length < 50 && length > 0) {
+                $indicator.html('<span class="geoai-status-ok">○ Could be longer</span>');
+            } else {
+                $indicator.html('');
+            }
+        } else {
+            if (length >= 150 && length <= 160) {
+                $indicator.html('<span class="geoai-status-good">✓ Perfect</span>');
+            } else if (length > 160 && length <= 180) {
+                $indicator.html('<span class="geoai-status-warning">⚠ Too long</span>');
+            } else if (length < 150 && length > 0) {
+                $indicator.html('<span class="geoai-status-ok">○ Could be longer</span>');
+            } else {
+                $indicator.html('');
+            }
+        }
+    }
+
+    // Initialize character counters
+    $('.geoai-title-input, .geoai-desc-input').each(function () {
+        updateCharCounter(this);
+    }).on('input', function () {
+        updateCharCounter(this);
+    });
+
     // Export settings
     $('#geoai-export-settings').on('click', function (e) {
         e.preventDefault();

@@ -4,7 +4,7 @@ Tags: seo, ai, google ai overviews, perplexity, chatgpt, schema, meta tags
 Requires at least: 6.2
 Tested up to: 6.4
 Requires PHP: 8.1
-Stable tag: 1.1.0
+Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -106,6 +106,23 @@ The meta box works in Classic Editor, but the Answer Card block and sidebar audi
 6. Crawler Controls & robots.txt Preview
 
 == Changelog ==
+
+= 1.2.1 =
+* Fixed: Critical error when saving API keys (moved encryption to proper callback)
+* Fixed: Site crashes due to encryption errors (added comprehensive error handling)
+* Fixed: WordPress settings API compliance issues
+* Improved: Encryption validation with detailed error logging
+* Improved: API key storage with change detection
+
+= 1.2.0 =
+* Added: WordPress media library integration for OG image selection
+* Added: Real-time image preview with insights (dimensions, file size, format)
+* Added: Contextual help tooltips throughout settings
+* Added: SEO best practices info boxes
+* Added: Character counters with visual status indicators for titles/descriptions
+* Added: Collapsible variables reference box
+* Improved: Enhanced UI/UX for better user experience
+* Improved: More intuitive layouts for non-technical users
 
 = 1.1.0 =
 * Added: Full-featured 301/302 redirect manager with wildcard support

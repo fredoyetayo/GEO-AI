@@ -5,6 +5,59 @@ All notable changes to GEO AI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2024-01-25
+
+### Fixed
+
+#### Critical Bug Fixes
+- **Fixed critical error when saving API keys**: Moved encryption logic from render phase to proper sanitization callback
+- **Added comprehensive error handling**: All encryption/decryption operations now wrapped in try-catch blocks
+- **Prevented site crashes**: Errors are now logged and displayed as admin notices instead of fatal errors
+- **Improved encryption validation**: Added checks for invalid key formats and encrypted data
+- **Fixed WordPress settings API compliance**: Removed inline form processing that violated WP standards
+
+### Improved
+- Enhanced encryption error messages with specific details
+- Added sodium availability checks with better fallback handling
+- Improved API key storage with change detection to avoid unnecessary re-encryption
+
+---
+
+## [1.2.0] - 2024-01-25
+
+### Added
+
+#### Enhanced User Experience
+- WordPress media library integration for OpenGraph image selection
+- Real-time image preview with remove functionality
+- Intelligent image insights and recommendations (dimensions, aspect ratio, file size, format)
+- Contextual help tooltips throughout settings pages
+- Informational boxes with SEO best practices and tips
+- Collapsible variables reference box with visual grid layout
+
+#### Title & Meta Improvements
+- Real-time character counters with color-coded status indicators
+- Visual feedback for optimal, warning, and error states
+- SEO recommendations and best practices inline
+- Enhanced template input fields with better sizing
+- Meta description template support
+
+#### Social Settings
+- Visual OG image preview with dimensions and insights
+- Automatic validation (1200x630px, 1.91:1 ratio, file size checks)
+- Format recommendations (JPG/PNG preferred over WebP)
+- Success/warning indicators for image quality
+- Enhanced UI with step-by-step guidance
+
+### Improved
+- Better visual hierarchy across all settings tabs
+- More intuitive form layouts with proper spacing
+- Responsive design improvements for mobile devices
+- Clearer explanations for non-technical users
+- Professional color-coded info boxes (primary, success, warning, secondary)
+
+---
+
 ## [1.1.0] - 2024-01-20
 
 ### Added
