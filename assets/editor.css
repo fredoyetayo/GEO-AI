@@ -1,0 +1,90 @@
+/* GEO AI Editor Styles */
+
+.geoai-sidebar-panel {
+    padding: 16px;
+}
+
+.geoai-audit-button {
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+.geoai-score-dial {
+    text-align: center;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.geoai-score-number {
+    font-size: 48px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.geoai-score-label {
+    font-size: 14px;
+    color: #666;
+    margin-top: 8px;
+}
+
+.geoai-score-breakdown {
+    margin-bottom: 16px;
+}
+
+.geoai-score-breakdown ul {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0;
+}
+
+.geoai-score-breakdown li {
+    padding: 4px 0;
+    font-size: 14px;
+}
+
+.geoai-issues-list {
+    margin-top: 16px;
+}
+
+.geoai-issue-item {
+    margin-bottom: 12px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.geoai-issue-severity {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.geoai-issue-severity.high {
+    color: #dc3232;
+}
+
+.geoai-issue-severity.med {
+    color: #ffb900;
+}
+
+.geoai-issue-severity.low {
+    color: #46b450;
+}
+
+.geoai-issue-message {
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.geoai-quick-fix-button {
+    margin-top: 8px;
+}
+
+/* Answer Card Block Styles in Editor */
+.wp-block-geoai-answer-card {
+    margin: 20px 0;
+}

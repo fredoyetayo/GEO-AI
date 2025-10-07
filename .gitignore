@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Build outputs
+build/
+dist/
+assets/editor.js
+assets/editor.asset.php
+
+# WordPress
+.wordpress-org/
+.wp-env/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.local
+
+# Temporary files
+*.tmp
+*.temp
+
+# Compiled CSS (if using preprocessors)
+*.css.map
+
+# Package manager locks (keep package-lock.json for consistency)
+# yarn.lock

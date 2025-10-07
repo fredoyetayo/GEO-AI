@@ -1,0 +1,7 @@
+{
+  "core": "WordPress/WordPress#6.4",
+  "plugins": ["."],
+  "themes": ["WordPress/twentytwentyfour"],
+  "phpVersion": "8.1",
+  "port": 8888
+}

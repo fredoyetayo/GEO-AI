@@ -1,0 +1,28 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "geoai/answer-card",
+  "version": "1.0.0",
+  "title": "Answer Card",
+  "category": "text",
+  "icon": "info",
+  "description": "A concise TL;DR summary with key facts optimized for AI answer engines.",
+  "supports": {
+    "html": false,
+    "align": true
+  },
+  "attributes": {
+    "tldr": {
+      "type": "string",
+      "default": ""
+    },
+    "keyFacts": {
+      "type": "array",
+      "default": []
+    }
+  },
+  "textdomain": "geo-ai",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./editor.css",
+  "style": "file:./style.css"
+}

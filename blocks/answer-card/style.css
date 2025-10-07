@@ -1,0 +1,47 @@
+.geoai-answer-card {
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.geoai-answer-card-header h3 {
+    margin: 0 0 16px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.geoai-answer-card-tldr {
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0 0 20px 0;
+    color: #495057;
+}
+
+.geoai-answer-card-facts h4 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.geoai-answer-card-facts ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.geoai-answer-card-facts li {
+    padding: 8px 0 8px 24px;
+    position: relative;
+}
+
+.geoai-answer-card-facts li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #28a745;
+    font-weight: bold;
+}

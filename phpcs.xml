@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<ruleset name="GEO AI">
+    <description>WordPress Coding Standards for GEO AI plugin</description>
+
+    <!-- Check all PHP files -->
+    <file>./includes</file>
+    <file>./geo-ai.php</file>
+
+    <!-- Exclude vendor and node_modules -->
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/build/*</exclude-pattern>
+
+    <!-- Use WordPress coding standards -->
+    <rule ref="WordPress">
+        <!-- Allow short array syntax -->
+        <exclude name="Generic.Arrays.DisallowShortArraySyntax"/>
+    </rule>
+
+    <!-- Check for PHP cross-version compatibility -->
+    <config name="testVersion" value="8.1-"/>
+    
+    <!-- Allow short array syntax [] -->
+    <rule ref="Universal.Arrays.DisallowShortArraySyntax">
+        <severity>0</severity>
+    </rule>
+
+    <!-- Set text domain -->
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array">
+                <element value="geo-ai"/>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- Verify that everything in the global namespace is prefixed -->
+    <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+        <properties>
+            <property name="prefixes" type="array">
+                <element value="geoai"/>
+                <element value="GeoAI"/>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- Allow snake_case for WordPress functions -->
+    <rule ref="WordPress.NamingConventions.ValidFunctionName">
+        <properties>
+            <property name="minimum_supported_wp_version" value="6.2"/>
+        </properties>
+    </rule>
+</ruleset>
