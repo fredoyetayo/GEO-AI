@@ -33,6 +33,8 @@ class GeoAI_Admin {
         add_action( 'admin_init', array( $this, 'register_settings' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
         add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_editor_assets' ) );
+        add_action( 'add_meta_boxes', array( $this, 'add_seo_meta_boxes' ) );
+        add_action( 'save_post', array( $this, 'save_seo_meta' ), 10, 2 );
     }
 
     public function add_admin_menu() {
@@ -44,6 +46,16 @@ class GeoAI_Admin {
             array( $this, 'render_settings_page' ),
             'dashicons-search',
             80
+        );
+
+        // Add SEO Dashboard submenu
+        add_submenu_page(
+            'geoai-settings',
+            __( 'SEO Dashboard', 'geo-ai' ),
+            __( 'SEO Dashboard', 'geo-ai' ),
+            'manage_options',
+            'geoai-dashboard',
+            array( $this, 'render_dashboard_page' )
         );
     }
 
@@ -93,8 +105,19 @@ class GeoAI_Admin {
         // Check if the value is already encrypted (comparing with stored value)
         $stored_key = get_option( 'geoai_api_key', '' );
         if ( ! empty( $stored_key ) ) {
-            $decrypted_stored = $this->decrypt( $stored_key );
-            if ( $value === $decrypted_stored ) {
+            try {
+                $decrypted_stored = $this->decrypt( $stored_key );
+            } catch ( \Exception $e ) {
+                error_log( 'GEO AI: Error decrypting stored API key during sanitization - ' . $e->getMessage() );
+                add_settings_error(
+                    'geoai_api_key',
+                    'decryption_error',
+                    __( 'Existing API key could not be decrypted. Please re-enter your key.', 'geo-ai' )
+                );
+                $decrypted_stored = '';
+            }
+
+            if ( $value === $decrypted_stored && ! empty( $stored_key ) ) {
                 // Value hasn't changed, return existing encrypted value
                 return $stored_key;
             }
@@ -308,6 +331,12 @@ class GeoAI_Admin {
                 $decrypted_key = $this->decrypt( $api_key );
             } catch ( \Exception $e ) {
                 error_log( 'GEO AI: Error decrypting API key - ' . $e->getMessage() );
+                add_settings_error(
+                    'geoai_api_key',
+                    'decryption_error_display',
+                    __( 'Stored API key could not be decrypted. Please re-enter your key.', 'geo-ai' ),
+                    'error'
+                );
                 $decrypted_key = '';
             }
         }
@@ -1204,5 +1233,333 @@ class GeoAI_Admin {
             </tr>
         </table>
         <?php
+    }
+
+    /**
+     * Render SEO Dashboard page.
+     */
+    public function render_dashboard_page() {
+        $dashboard = new \GeoAI\Analyzers\SEO_Dashboard();
+        $data = $dashboard->get_dashboard_data();
+        ?>
+        <div class="wrap geoai-dashboard">
+            <h1><?php esc_html_e( 'SEO Dashboard', 'geo-ai' ); ?></h1>
+            
+            <div class="geoai-dashboard-header">
+                <div class="geoai-score-card">
+                    <h2><?php esc_html_e( 'Overall SEO Health', 'geo-ai' ); ?></h2>
+                    <div class="geoai-score-circle <?php echo esc_attr( $this->get_score_class( $data['overall_score'] ) ); ?>">
+                        <span class="score"><?php echo esc_html( $data['overall_score'] ); ?></span>
+                        <span class="label">/100</span>
+                    </div>
+                </div>
+
+                <div class="geoai-stats-grid">
+                    <div class="geoai-stat-card">
+                        <span class="stat-number"><?php echo esc_html( $data['post_stats']['total_posts'] ); ?></span>
+                        <span class="stat-label"><?php esc_html_e( 'Total Posts', 'geo-ai' ); ?></span>
+                    </div>
+                    <div class="geoai-stat-card">
+                        <span class="stat-number"><?php echo esc_html( $data['post_stats']['meta_percentage'] ); ?>%</span>
+                        <span class="stat-label"><?php esc_html_e( 'With Meta', 'geo-ai' ); ?></span>
+                    </div>
+                    <div class="geoai-stat-card">
+                        <span class="stat-number"><?php echo esc_html( $data['post_stats']['keyword_percentage'] ); ?>%</span>
+                        <span class="stat-label"><?php esc_html_e( 'With Keywords', 'geo-ai' ); ?></span>
+                    </div>
+                </div>
+            </div>
+
+            <?php if ( ! empty( $data['issues'] ) ) : ?>
+            <div class="geoai-issues-section">
+                <h2><?php esc_html_e( 'Issues Found', 'geo-ai' ); ?></h2>
+                <div class="geoai-issues-list">
+                    <?php foreach ( $data['issues'] as $issue ) : ?>
+                    <div class="geoai-issue-card geoai-issue-<?php echo esc_attr( $issue['severity'] ); ?>">
+                        <div class="issue-icon">
+                            <?php
+                            switch ( $issue['severity'] ) {
+                                case 'critical':
+                                case 'high':
+                                    echo '<span class="dashicons dashicons-warning"></span>';
+                                    break;
+                                case 'medium':
+                                    echo '<span class="dashicons dashicons-info"></span>';
+                                    break;
+                                default:
+                                    echo '<span class="dashicons dashicons-flag"></span>';
+                            }
+                            ?>
+                        </div>
+                        <div class="issue-content">
+                            <h3><?php echo esc_html( $issue['message'] ); ?></h3>
+                            <?php if ( ! empty( $issue['action'] ) ) : ?>
+                            <a href="<?php echo esc_url( $issue['action'] ); ?>" class="button button-small">
+                                <?php esc_html_e( 'Fix Now', 'geo-ai' ); ?>
+                            </a>
+                            <?php endif; ?>
+                        </div>
+                        <div class="issue-badge">
+                            <span class="severity-badge"><?php echo esc_html( ucfirst( $issue['severity'] ) ); ?></span>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <?php if ( ! empty( $data['recommendations'] ) ) : ?>
+            <div class="geoai-recommendations-section">
+                <h2><?php esc_html_e( 'Recommendations', 'geo-ai' ); ?></h2>
+                <div class="geoai-recommendations-list">
+                    <?php foreach ( $data['recommendations'] as $rec ) : ?>
+                    <div class="geoai-recommendation-card">
+                        <h3><?php echo esc_html( $rec['title'] ); ?></h3>
+                        <p><?php echo esc_html( $rec['message'] ); ?></p>
+                        <?php if ( ! empty( $rec['action'] ) ) : ?>
+                        <a href="<?php echo esc_url( $rec['action'] ); ?>" class="button">
+                            <?php esc_html_e( 'Take Action', 'geo-ai' ); ?>
+                        </a>
+                        <?php endif; ?>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    /**
+     * Add SEO meta boxes to post editor.
+     */
+    public function add_seo_meta_boxes() {
+        $post_types = get_post_types( array( 'public' => true ), 'names' );
+        
+        foreach ( $post_types as $post_type ) {
+            add_meta_box(
+                'geoai_keyword_analysis',
+                __( 'Focus Keyword Analysis', 'geo-ai' ),
+                array( $this, 'render_keyword_meta_box' ),
+                $post_type,
+                'normal',
+                'high'
+            );
+
+            add_meta_box(
+                'geoai_readability_analysis',
+                __( 'Readability Analysis', 'geo-ai' ),
+                array( $this, 'render_readability_meta_box' ),
+                $post_type,
+                'normal',
+                'high'
+            );
+        }
+    }
+
+    /**
+     * Render keyword analysis meta box.
+     */
+    public function render_keyword_meta_box( $post ) {
+        wp_nonce_field( 'geoai_seo_meta', 'geoai_seo_nonce' );
+        
+        $focus_keyword = get_post_meta( $post->ID, '_geoai_focus_keyword', true );
+        $keyword_score = get_post_meta( $post->ID, '_geoai_keyword_score', true );
+        $keyword_data = get_post_meta( $post->ID, '_geoai_keyword_data', true );
+        
+        if ( $keyword_data ) {
+            $keyword_data = json_decode( $keyword_data, true );
+        }
+        ?>
+        <div class="geoai-keyword-analysis">
+            <p>
+                <label for="geoai_focus_keyword"><strong><?php esc_html_e( 'Focus Keyword:', 'geo-ai' ); ?></strong></label><br>
+                <input type="text" id="geoai_focus_keyword" name="geoai_focus_keyword" value="<?php echo esc_attr( $focus_keyword ); ?>" class="widefat" placeholder="<?php esc_attr_e( 'Enter your focus keyword', 'geo-ai' ); ?>" />
+                <button type="button" class="button button-secondary geoai-analyze-keyword" style="margin-top: 10px;">
+                    <?php esc_html_e( 'Analyze Keyword', 'geo-ai' ); ?>
+                </button>
+            </p>
+
+            <div id="geoai-keyword-results" <?php echo $keyword_score ? '' : 'style="display:none;"'; ?>>
+                <?php if ( $keyword_score ) : ?>
+                <div class="geoai-score-display">
+                    <span class="score-label"><?php esc_html_e( 'Keyword Score:', 'geo-ai' ); ?></span>
+                    <span class="score-value <?php echo esc_attr( $this->get_score_class( $keyword_score ) ); ?>">
+                        <?php echo esc_html( $keyword_score ); ?>/100
+                    </span>
+                </div>
+
+                <?php if ( ! empty( $keyword_data['issues'] ) ) : ?>
+                <ul class="geoai-issues-list">
+                    <?php foreach ( $keyword_data['issues'] as $issue ) : ?>
+                    <li class="issue-<?php echo esc_attr( $issue['severity'] ); ?>">
+                        <span class="dashicons dashicons-<?php echo $issue['severity'] === 'good' ? 'yes' : 'warning'; ?>"></span>
+                        <?php echo esc_html( $issue['message'] ); ?>
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
+                <?php endif; ?>
+
+                <?php if ( isset( $keyword_data['density'] ) ) : ?>
+                <p class="geoai-stat">
+                    <strong><?php esc_html_e( 'Keyword Density:', 'geo-ai' ); ?></strong>
+                    <?php echo esc_html( number_format( $keyword_data['density'], 2 ) ); ?>%
+                    (<?php echo esc_html( $keyword_data['occurrences'] ); ?> <?php esc_html_e( 'occurrences', 'geo-ai' ); ?>)
+                </p>
+                <?php endif; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render readability analysis meta box.
+     */
+    public function render_readability_meta_box( $post ) {
+        $readability_score = get_post_meta( $post->ID, '_geoai_readability_score', true );
+        $readability_data = get_post_meta( $post->ID, '_geoai_readability_data', true );
+        
+        if ( $readability_data ) {
+            $readability_data = json_decode( $readability_data, true );
+        }
+        ?>
+        <div class="geoai-readability-analysis">
+            <button type="button" class="button button-secondary geoai-analyze-readability">
+                <?php esc_html_e( 'Analyze Readability', 'geo-ai' ); ?>
+            </button>
+
+            <div id="geoai-readability-results" <?php echo $readability_score ? '' : 'style="display:none;"'; ?>>
+                <?php if ( $readability_score ) : ?>
+                <div class="geoai-score-display">
+                    <span class="score-label"><?php esc_html_e( 'Readability Score:', 'geo-ai' ); ?></span>
+                    <span class="score-value <?php echo esc_attr( $this->get_score_class( $readability_score ) ); ?>">
+                        <?php echo esc_html( $readability_score ); ?>/100
+                    </span>
+                </div>
+
+                <?php if ( ! empty( $readability_data['issues'] ) ) : ?>
+                <ul class="geoai-issues-list">
+                    <?php foreach ( $readability_data['issues'] as $issue ) : ?>
+                    <li class="issue-<?php echo esc_attr( $issue['severity'] ); ?>">
+                        <span class="dashicons dashicons-<?php echo $issue['severity'] === 'good' ? 'yes' : 'warning'; ?>"></span>
+                        <?php echo esc_html( $issue['message'] ); ?>
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
+                <?php endif; ?>
+
+                <?php if ( isset( $readability_data['flesch_score'] ) ) : ?>
+                <p class="geoai-stat">
+                    <strong><?php esc_html_e( 'Flesch Reading Ease:', 'geo-ai' ); ?></strong>
+                    <?php echo esc_html( number_format( $readability_data['flesch_score'], 1 ) ); ?>
+                </p>
+                <?php endif; ?>
+
+                <?php if ( isset( $readability_data['word_count'] ) ) : ?>
+                <p class="geoai-stat">
+                    <strong><?php esc_html_e( 'Word Count:', 'geo-ai' ); ?></strong>
+                    <?php echo esc_html( $readability_data['word_count'] ); ?>
+                </p>
+                <?php endif; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Save SEO meta data.
+     */
+    public function save_seo_meta( $post_id, $post ) {
+        // Check nonce
+        if ( ! isset( $_POST['geoai_seo_nonce'] ) || ! wp_verify_nonce( $_POST['geoai_seo_nonce'], 'geoai_seo_meta' ) ) {
+            return;
+        }
+
+        // Check autosave
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+            return;
+        }
+
+        // Check permissions
+        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+            return;
+        }
+
+        // Save focus keyword
+        if ( isset( $_POST['geoai_focus_keyword'] ) ) {
+            $keyword = sanitize_text_field( $_POST['geoai_focus_keyword'] );
+            update_post_meta( $post_id, '_geoai_focus_keyword', $keyword );
+
+            // Run keyword analysis if keyword is set
+            if ( ! empty( $keyword ) ) {
+                $this->run_keyword_analysis( $post_id );
+            }
+        }
+
+        // Run readability analysis
+        $this->run_readability_analysis( $post_id );
+    }
+
+    /**
+     * Run keyword analysis for a post.
+     */
+    private function run_keyword_analysis( $post_id ) {
+        $post = get_post( $post_id );
+        if ( ! $post ) {
+            return;
+        }
+
+        $keyword = get_post_meta( $post_id, '_geoai_focus_keyword', true );
+        if ( empty( $keyword ) ) {
+            return;
+        }
+
+        $analyzer = new \GeoAI\Analyzers\Keyword_Analyzer();
+        
+        $data = array(
+            'title'            => $post->post_title,
+            'content'          => $post->post_content,
+            'excerpt'          => $post->post_excerpt,
+            'slug'             => $post->post_name,
+            'meta_description' => get_post_meta( $post_id, '_geoai_meta_description', true ),
+        );
+
+        $result = $analyzer->analyze( $keyword, $data );
+
+        update_post_meta( $post_id, '_geoai_keyword_score', $result['score'] );
+        update_post_meta( $post_id, '_geoai_keyword_data', wp_json_encode( $result ) );
+    }
+
+    /**
+     * Run readability analysis for a post.
+     */
+    private function run_readability_analysis( $post_id ) {
+        $post = get_post( $post_id );
+        if ( ! $post ) {
+            return;
+        }
+
+        $analyzer = new \GeoAI\Analyzers\Readability_Analyzer();
+        $result = $analyzer->analyze( $post->post_content );
+
+        update_post_meta( $post_id, '_geoai_readability_score', $result['score'] );
+        update_post_meta( $post_id, '_geoai_readability_data', wp_json_encode( $result ) );
+    }
+
+    /**
+     * Get CSS class based on score.
+     */
+    private function get_score_class( $score ) {
+        if ( $score >= 80 ) {
+            return 'score-good';
+        } elseif ( $score >= 60 ) {
+            return 'score-ok';
+        } elseif ( $score >= 40 ) {
+            return 'score-warning';
+        } else {
+            return 'score-poor';
+        }
     }
 }

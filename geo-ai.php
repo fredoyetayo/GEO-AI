@@ -3,7 +3,7 @@
  * Plugin Name: GEO AI (AI SEO)
  * Plugin URI: https://fredoyetayo.com
  * Description: Modern SEO plugin optimized for AI answer engines (Google AI Overviews, Perplexity, ChatGPT) with classic SEO essentials.
- * Version: 1.2.1
+ * Version: 1.3.0
  * Requires at least: 6.2
  * Requires PHP: 8.1
  * Author: Fred Oyetayo
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants.
-define( 'GEOAI_VERSION', '1.2.1' );
+define( 'GEOAI_VERSION', '1.3.0' );
 define( 'GEOAI_PLUGIN_FILE', __FILE__ );
 define( 'GEOAI_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GEOAI_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -69,6 +69,11 @@ class GeoAI_Plugin {
 
         // Load traits.
         require_once GEOAI_PLUGIN_DIR . 'includes/traits/trait-encryption.php';
+
+        // Load analyzers.
+        require_once GEOAI_PLUGIN_DIR . 'includes/analyzers/class-keyword-analyzer.php';
+        require_once GEOAI_PLUGIN_DIR . 'includes/analyzers/class-readability-analyzer.php';
+        require_once GEOAI_PLUGIN_DIR . 'includes/analyzers/class-seo-dashboard.php';
 
         // Load core classes.
         require_once GEOAI_PLUGIN_DIR . 'includes/class-geoai-admin.php';

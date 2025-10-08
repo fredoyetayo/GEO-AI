@@ -5,6 +5,52 @@ All notable changes to GEO AI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2024-01-26
+
+### Added - Phase 1: Yoast-Inspired Features
+
+#### Focus Keyword Analysis
+- **Keyword in title check** with position scoring (20 points)
+- **Keyword in meta description** validation (15 points)
+- **Keyword in URL/slug** detection (10 points)
+- **First paragraph keyword** presence check (15 points)
+- **Keyword density calculator** with optimal range 0.5-2.5% (20 points)
+- **Keyword distribution analyzer** across content sections (20 points)
+- Real-time scoring system (0-100) with detailed feedback
+- Post meta boxes in editor for instant analysis
+
+#### Readability Analysis
+- **Flesch Reading Ease score** calculation (25 points)
+- **Sentence length analyzer** with warnings for >20 words (20 points)
+- **Paragraph length checker** recommends <150 words (15 points)
+- **Subheading distribution** validator (15 points)
+- **Passive voice detector** warns when >20% (15 points)
+- **Transition words checker** aims for 30%+ usage (10 points)
+- Comprehensive readability scoring with actionable insights
+- Syllable counting for accurate Flesch calculations
+
+#### SEO Dashboard
+- **Overall site SEO health score** (0-100) with visual indicator
+- **Site-wide statistics**: total posts, meta coverage, keyword usage
+- **Issue detection system**:
+  - Posts without meta descriptions (high severity)
+  - Duplicate titles (medium severity)
+  - Low word count pages <300 words (medium severity)
+  - Missing focus keywords (low severity)
+  - Readability issues (low severity)
+- **Smart recommendations** based on detected issues
+- **Action buttons** linking directly to bulk editor
+- Beautiful dashboard UI with cards and color-coded severity
+
+### Improved
+- Enhanced admin UI with professional dashboard design
+- Meta boxes integrated into post editor for all public post types
+- Automatic analysis on post save
+- Color-coded scoring (green/blue/yellow/red) for quick assessment
+- Responsive dashboard layout for mobile devices
+
+---
+
 ## [1.2.1] - 2024-01-25
 
 ### Fixed

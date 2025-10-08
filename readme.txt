@@ -4,7 +4,7 @@ Tags: seo, ai, google ai overviews, perplexity, chatgpt, schema, meta tags
 Requires at least: 6.2
 Tested up to: 6.4
 Requires PHP: 8.1
-Stable tag: 1.2.1
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -106,6 +106,18 @@ The meta box works in Classic Editor, but the Answer Card block and sidebar audi
 6. Crawler Controls & robots.txt Preview
 
 == Changelog ==
+
+= 1.3.0 =
+* Added: Focus Keyword Analysis with 6-point scoring system
+* Added: Readability Analysis with Flesch Reading Ease calculator
+* Added: SEO Dashboard with site-wide health monitoring
+* Added: Keyword density and distribution tracking
+* Added: Sentence/paragraph length analysis
+* Added: Passive voice and transition words detection
+* Added: Meta boxes in post editor for real-time analysis
+* Added: Issue detection for missing meta, duplicate titles, thin content
+* Improved: Professional dashboard UI with color-coded scores
+* Improved: Automatic analysis on post save
 
 = 1.2.1 =
 * Fixed: Critical error when saving API keys (moved encryption to proper callback)
