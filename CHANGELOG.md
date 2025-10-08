@@ -5,6 +5,39 @@ All notable changes to GEO AI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2024-01-26
+
+### Added
+
+#### Beautiful Dashboard Redesign
+- **Modern hero section** with gradient background and large score display
+- **Interactive Chart.js visualizations**:
+  - Bar chart showing score distribution (Excellent/Good/Fair/Poor)
+  - Doughnut chart displaying content quality overview
+- **Animated stat cards** with gradient icons and hover effects
+- **Progress bars** for meta descriptions and keyword coverage
+- **Top Performers section** showing best-optimized posts
+- **Needs Attention section** highlighting posts requiring work
+- **Recent Activity feed** with timestamps
+- **Modern issue cards** with severity badges and counts
+
+#### Custom GEO Icon
+- **Custom SVG icon** representing global AI network
+- Globe with latitude/longitude lines
+- Neural network nodes and connections
+- "AI" indicator in center
+- Replaces generic search icon in WordPress admin menu
+
+### Improved
+- Dashboard now uses Chart.js 4.4.0 for data visualization
+- Gradient color schemes throughout dashboard
+- Card-based layout with shadows and hover effects
+- Responsive design optimized for all screen sizes
+- Better data organization with dedicated sections
+- Visual hierarchy with icons and color coding
+
+---
+
 ## [1.3.0] - 2024-01-26
 
 ### Added - Phase 1: Yoast-Inspired Features

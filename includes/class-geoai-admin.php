@@ -38,13 +38,37 @@ class GeoAI_Admin {
     }
 
     public function add_admin_menu() {
+        // Use custom SVG icon
+        $icon_svg = 'data:image/svg+xml;base64,' . base64_encode(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="white">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="white" stroke-width="3"/>
+                <ellipse cx="50" cy="50" rx="45" ry="15" fill="none" stroke="white" stroke-width="1.5" opacity="0.6"/>
+                <ellipse cx="50" cy="50" rx="45" ry="30" fill="none" stroke="white" stroke-width="1.5" opacity="0.6"/>
+                <ellipse cx="50" cy="50" rx="15" ry="45" fill="none" stroke="white" stroke-width="1.5" opacity="0.6"/>
+                <ellipse cx="50" cy="50" rx="30" ry="45" fill="none" stroke="white" stroke-width="1.5" opacity="0.6"/>
+                <circle cx="50" cy="25" r="4" fill="white"/>
+                <circle cx="70" cy="40" r="4" fill="white"/>
+                <circle cx="70" cy="60" r="4" fill="white"/>
+                <circle cx="50" cy="75" r="4" fill="white"/>
+                <circle cx="30" cy="60" r="4" fill="white"/>
+                <circle cx="30" cy="40" r="4" fill="white"/>
+                <line x1="50" y1="25" x2="70" y2="40" stroke="white" stroke-width="2" opacity="0.5"/>
+                <line x1="70" y1="40" x2="70" y2="60" stroke="white" stroke-width="2" opacity="0.5"/>
+                <line x1="70" y1="60" x2="50" y2="75" stroke="white" stroke-width="2" opacity="0.5"/>
+                <line x1="50" y1="75" x2="30" y2="60" stroke="white" stroke-width="2" opacity="0.5"/>
+                <line x1="30" y1="60" x2="30" y2="40" stroke="white" stroke-width="2" opacity="0.5"/>
+                <line x1="30" y1="40" x2="50" y2="25" stroke="white" stroke-width="2" opacity="0.5"/>
+                <circle cx="50" cy="50" r="8" fill="white"/>
+            </svg>'
+        );
+
         add_menu_page(
             __( 'GEO AI Settings', 'geo-ai' ),
             __( 'GEO AI', 'geo-ai' ),
             'manage_options',
             'geoai-settings',
             array( $this, 'render_settings_page' ),
-            'dashicons-search',
+            $icon_svg,
             80
         );
 
@@ -139,7 +163,7 @@ class GeoAI_Admin {
     }
 
     public function enqueue_admin_assets( $hook ) {
-        if ( 'toplevel_page_geoai-settings' !== $hook ) {
+        if ( 'toplevel_page_geoai-settings' !== $hook && 'geo-ai_page_geoai-dashboard' !== $hook ) {
             return;
         }
 
@@ -149,6 +173,17 @@ class GeoAI_Admin {
             array(),
             GEOAI_VERSION
         );
+
+        // Enqueue Chart.js for dashboard
+        if ( 'geo-ai_page_geoai-dashboard' === $hook ) {
+            wp_enqueue_script(
+                'chartjs',
+                'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
+                array(),
+                '4.4.0',
+                true
+            );
+        }
 
         wp_enqueue_script(
             'geoai-admin',
@@ -1241,84 +1276,191 @@ class GeoAI_Admin {
     public function render_dashboard_page() {
         $dashboard = new \GeoAI\Analyzers\SEO_Dashboard();
         $data = $dashboard->get_dashboard_data();
+        
+        // Prepare chart data
+        $score_dist = $data['score_distribution'];
         ?>
-        <div class="wrap geoai-dashboard">
-            <h1><?php esc_html_e( 'SEO Dashboard', 'geo-ai' ); ?></h1>
-            
-            <div class="geoai-dashboard-header">
-                <div class="geoai-score-card">
-                    <h2><?php esc_html_e( 'Overall SEO Health', 'geo-ai' ); ?></h2>
-                    <div class="geoai-score-circle <?php echo esc_attr( $this->get_score_class( $data['overall_score'] ) ); ?>">
-                        <span class="score"><?php echo esc_html( $data['overall_score'] ); ?></span>
-                        <span class="label">/100</span>
-                    </div>
+        <div class="wrap geoai-dashboard-v2">
+            <div class="geoai-dashboard-hero">
+                <div class="hero-content">
+                    <h1>
+                        <span class="dashicons dashicons-chart-area"></span>
+                        <?php esc_html_e( 'SEO Analytics Dashboard', 'geo-ai' ); ?>
+                    </h1>
+                    <p class="hero-subtitle"><?php esc_html_e( 'Monitor your site\'s SEO performance at a glance', 'geo-ai' ); ?></p>
                 </div>
-
-                <div class="geoai-stats-grid">
-                    <div class="geoai-stat-card">
-                        <span class="stat-number"><?php echo esc_html( $data['post_stats']['total_posts'] ); ?></span>
-                        <span class="stat-label"><?php esc_html_e( 'Total Posts', 'geo-ai' ); ?></span>
-                    </div>
-                    <div class="geoai-stat-card">
-                        <span class="stat-number"><?php echo esc_html( $data['post_stats']['meta_percentage'] ); ?>%</span>
-                        <span class="stat-label"><?php esc_html_e( 'With Meta', 'geo-ai' ); ?></span>
-                    </div>
-                    <div class="geoai-stat-card">
-                        <span class="stat-number"><?php echo esc_html( $data['post_stats']['keyword_percentage'] ); ?>%</span>
-                        <span class="stat-label"><?php esc_html_e( 'With Keywords', 'geo-ai' ); ?></span>
+                <div class="hero-score">
+                    <div class="score-circle-large <?php echo esc_attr( $this->get_score_class( $data['overall_score'] ) ); ?>">
+                        <div class="score-inner">
+                            <span class="score-value"><?php echo esc_html( $data['overall_score'] ); ?></span>
+                            <span class="score-max">/100</span>
+                        </div>
+                        <span class="score-label"><?php esc_html_e( 'SEO Health', 'geo-ai' ); ?></span>
                     </div>
                 </div>
             </div>
 
-            <?php if ( ! empty( $data['issues'] ) ) : ?>
-            <div class="geoai-issues-section">
-                <h2><?php esc_html_e( 'Issues Found', 'geo-ai' ); ?></h2>
-                <div class="geoai-issues-list">
-                    <?php foreach ( $data['issues'] as $issue ) : ?>
-                    <div class="geoai-issue-card geoai-issue-<?php echo esc_attr( $issue['severity'] ); ?>">
-                        <div class="issue-icon">
-                            <?php
-                            switch ( $issue['severity'] ) {
-                                case 'critical':
-                                case 'high':
-                                    echo '<span class="dashicons dashicons-warning"></span>';
-                                    break;
-                                case 'medium':
-                                    echo '<span class="dashicons dashicons-info"></span>';
-                                    break;
-                                default:
-                                    echo '<span class="dashicons dashicons-flag"></span>';
-                            }
-                            ?>
+            <!-- Quick Stats -->
+            <div class="geoai-quick-stats">
+                <div class="stat-box">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <span class="dashicons dashicons-admin-post"></span>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number"><?php echo esc_html( $data['post_stats']['total_posts'] ); ?></div>
+                        <div class="stat-label"><?php esc_html_e( 'Total Posts', 'geo-ai' ); ?></div>
+                    </div>
+                </div>
+
+                <div class="stat-box">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <span class="dashicons dashicons-editor-alignleft"></span>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number"><?php echo esc_html( $data['post_stats']['meta_percentage'] ); ?>%</div>
+                        <div class="stat-label"><?php esc_html_e( 'With Meta Descriptions', 'geo-ai' ); ?></div>
+                        <div class="stat-progress">
+                            <div class="progress-bar" style="width: <?php echo esc_attr( $data['post_stats']['meta_percentage'] ); ?>%;"></div>
                         </div>
-                        <div class="issue-content">
-                            <h3><?php echo esc_html( $issue['message'] ); ?></h3>
-                            <?php if ( ! empty( $issue['action'] ) ) : ?>
-                            <a href="<?php echo esc_url( $issue['action'] ); ?>" class="button button-small">
-                                <?php esc_html_e( 'Fix Now', 'geo-ai' ); ?>
+                    </div>
+                </div>
+
+                <div class="stat-box">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <span class="dashicons dashicons-search"></span>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number"><?php echo esc_html( $data['post_stats']['keyword_percentage'] ); ?>%</div>
+                        <div class="stat-label"><?php esc_html_e( 'With Focus Keywords', 'geo-ai' ); ?></div>
+                        <div class="stat-progress">
+                            <div class="progress-bar" style="width: <?php echo esc_attr( $data['post_stats']['keyword_percentage'] ); ?>%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-box">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                        <span class="dashicons dashicons-warning"></span>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number"><?php echo count( $data['issues'] ); ?></div>
+                        <div class="stat-label"><?php esc_html_e( 'Issues Found', 'geo-ai' ); ?></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="geoai-charts-row">
+                <div class="chart-card">
+                    <h3><span class="dashicons dashicons-chart-bar"></span> <?php esc_html_e( 'Score Distribution', 'geo-ai' ); ?></h3>
+                    <canvas id="geoai-score-chart" height="300"></canvas>
+                </div>
+
+                <div class="chart-card">
+                    <h3><span class="dashicons dashicons-chart-pie"></span> <?php esc_html_e( 'Content Quality Overview', 'geo-ai' ); ?></h3>
+                    <canvas id="geoai-quality-chart" height="300"></canvas>
+                </div>
+            </div>
+
+            <!-- Content Lists Row -->
+            <div class="geoai-content-row">
+                <!-- Top Performers -->
+                <div class="content-card">
+                    <h3><span class="dashicons dashicons-star-filled"></span> <?php esc_html_e( 'Top Performers', 'geo-ai' ); ?></h3>
+                    <?php if ( ! empty( $data['top_performers'] ) ) : ?>
+                    <ul class="content-list">
+                        <?php foreach ( $data['top_performers'] as $post ) : ?>
+                        <li>
+                            <a href="<?php echo esc_url( get_edit_post_link( $post['ID'] ) ); ?>">
+                                <?php echo esc_html( wp_trim_words( $post['post_title'], 8 ) ); ?>
                             </a>
-                            <?php endif; ?>
-                        </div>
-                        <div class="issue-badge">
-                            <span class="severity-badge"><?php echo esc_html( ucfirst( $issue['severity'] ) ); ?></span>
-                        </div>
-                    </div>
-                    <?php endforeach; ?>
+                            <div class="post-scores">
+                                <?php if ( ! empty( $post['keyword_score'] ) ) : ?>
+                                <span class="score-badge score-<?php echo esc_attr( $this->get_score_class( $post['keyword_score'] ) ); ?>">
+                                    K: <?php echo esc_html( $post['keyword_score'] ); ?>
+                                </span>
+                                <?php endif; ?>
+                                <?php if ( ! empty( $post['readability_score'] ) ) : ?>
+                                <span class="score-badge score-<?php echo esc_attr( $this->get_score_class( $post['readability_score'] ) ); ?>">
+                                    R: <?php echo esc_html( $post['readability_score'] ); ?>
+                                </span>
+                                <?php endif; ?>
+                            </div>
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <?php else : ?>
+                    <p class="no-data"><?php esc_html_e( 'No posts with high scores yet. Start optimizing!', 'geo-ai' ); ?></p>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Needs Attention -->
+                <div class="content-card attention">
+                    <h3><span class="dashicons dashicons-flag"></span> <?php esc_html_e( 'Needs Attention', 'geo-ai' ); ?></h3>
+                    <?php if ( ! empty( $data['needs_attention'] ) ) : ?>
+                    <ul class="content-list">
+                        <?php foreach ( $data['needs_attention'] as $post ) : ?>
+                        <li>
+                            <a href="<?php echo esc_url( get_edit_post_link( $post['ID'] ) ); ?>">
+                                <?php echo esc_html( wp_trim_words( $post['post_title'], 8 ) ); ?>
+                            </a>
+                            <div class="post-scores">
+                                <?php if ( isset( $post['keyword_score'] ) ) : ?>
+                                <span class="score-badge score-<?php echo esc_attr( $this->get_score_class( $post['keyword_score'] ) ); ?>">
+                                    K: <?php echo esc_html( $post['keyword_score'] ); ?>
+                                </span>
+                                <?php endif; ?>
+                                <?php if ( isset( $post['readability_score'] ) ) : ?>
+                                <span class="score-badge score-<?php echo esc_attr( $this->get_score_class( $post['readability_score'] ) ); ?>">
+                                    R: <?php echo esc_html( $post['readability_score'] ); ?>
+                                </span>
+                                <?php endif; ?>
+                            </div>
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <?php else : ?>
+                    <p class="no-data"><?php esc_html_e( 'Great! No posts need immediate attention.', 'geo-ai' ); ?></p>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="content-card">
+                    <h3><span class="dashicons dashicons-clock"></span> <?php esc_html_e( 'Recent Activity', 'geo-ai' ); ?></h3>
+                    <?php if ( ! empty( $data['recent_activity'] ) ) : ?>
+                    <ul class="content-list">
+                        <?php foreach ( $data['recent_activity'] as $post ) : ?>
+                        <li>
+                            <a href="<?php echo esc_url( get_edit_post_link( $post['ID'] ) ); ?>">
+                                <?php echo esc_html( wp_trim_words( $post['post_title'], 8 ) ); ?>
+                            </a>
+                            <div class="post-meta">
+                                <span class="post-date"><?php echo esc_html( human_time_diff( strtotime( $post['post_modified'] ), current_time( 'timestamp' ) ) ); ?> <?php esc_html_e( 'ago', 'geo-ai' ); ?></span>
+                            </div>
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <?php else : ?>
+                    <p class="no-data"><?php esc_html_e( 'No recent activity.', 'geo-ai' ); ?></p>
+                    <?php endif; ?>
                 </div>
             </div>
-            <?php endif; ?>
 
-            <?php if ( ! empty( $data['recommendations'] ) ) : ?>
-            <div class="geoai-recommendations-section">
-                <h2><?php esc_html_e( 'Recommendations', 'geo-ai' ); ?></h2>
-                <div class="geoai-recommendations-list">
-                    <?php foreach ( $data['recommendations'] as $rec ) : ?>
-                    <div class="geoai-recommendation-card">
-                        <h3><?php echo esc_html( $rec['title'] ); ?></h3>
-                        <p><?php echo esc_html( $rec['message'] ); ?></p>
-                        <?php if ( ! empty( $rec['action'] ) ) : ?>
-                        <a href="<?php echo esc_url( $rec['action'] ); ?>" class="button">
-                            <?php esc_html_e( 'Take Action', 'geo-ai' ); ?>
+            <!-- Issues Section -->
+            <?php if ( ! empty( $data['issues'] ) ) : ?>
+            <div class="geoai-issues-modern">
+                <h2><span class="dashicons dashicons-warning"></span> <?php esc_html_e( 'Issues Requiring Action', 'geo-ai' ); ?></h2>
+                <div class="issues-grid">
+                    <?php foreach ( $data['issues'] as $issue ) : ?>
+                    <div class="issue-modern issue-<?php echo esc_attr( $issue['severity'] ); ?>">
+                        <div class="issue-header">
+                            <span class="issue-severity"><?php echo esc_html( ucfirst( $issue['severity'] ) ); ?></span>
+                            <span class="issue-count"><?php echo esc_html( $issue['count'] ); ?></span>
+                        </div>
+                        <p class="issue-message"><?php echo esc_html( $issue['message'] ); ?></p>
+                        <?php if ( ! empty( $issue['action'] ) ) : ?>
+                        <a href="<?php echo esc_url( $issue['action'] ); ?>" class="issue-action">
+                            <?php esc_html_e( 'Fix Now', 'geo-ai' ); ?> →
                         </a>
                         <?php endif; ?>
                     </div>
@@ -1327,6 +1469,106 @@ class GeoAI_Admin {
             </div>
             <?php endif; ?>
         </div>
+
+        <script>
+        jQuery(document).ready(function($) {
+            // Score Distribution Chart
+            const scoreCtx = document.getElementById('geoai-score-chart');
+            if (scoreCtx) {
+                new Chart(scoreCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Excellent (80-100)', 'Good (60-79)', 'Fair (40-59)', 'Poor (0-39)'],
+                        datasets: [{
+                            label: 'Keyword Scores',
+                            data: [
+                                <?php echo (int) $score_dist['excellent']['keyword']; ?>,
+                                <?php echo (int) $score_dist['good']['keyword']; ?>,
+                                <?php echo (int) $score_dist['fair']['keyword']; ?>,
+                                <?php echo (int) $score_dist['poor']['keyword']; ?>
+                            ],
+                            backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 2
+                        }, {
+                            label: 'Readability Scores',
+                            data: [
+                                <?php echo (int) $score_dist['excellent']['readability']; ?>,
+                                <?php echo (int) $score_dist['good']['readability']; ?>,
+                                <?php echo (int) $score_dist['fair']['readability']; ?>,
+                                <?php echo (int) $score_dist['poor']['readability']; ?>
+                            ],
+                            backgroundColor: 'rgba(255, 99, 132, 0.8)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Quality Overview Pie Chart
+            const qualityCtx = document.getElementById('geoai-quality-chart');
+            if (qualityCtx) {
+                const totalPosts = <?php echo (int) $data['post_stats']['total_posts']; ?>;
+                const withMeta = <?php echo (int) $data['post_stats']['with_meta']; ?>;
+                const withKeyword = <?php echo (int) $data['post_stats']['with_keyword']; ?>;
+                
+                new Chart(qualityCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['With Meta & Keyword', 'Only Meta', 'Only Keyword', 'Neither'],
+                        datasets: [{
+                            data: [
+                                Math.min(withMeta, withKeyword),
+                                Math.max(0, withMeta - withKeyword),
+                                Math.max(0, withKeyword - withMeta),
+                                totalPosts - withMeta - withKeyword + Math.min(withMeta, withKeyword)
+                            ],
+                            backgroundColor: [
+                                'rgba(75, 192, 192, 0.8)',
+                                'rgba(54, 162, 235, 0.8)',
+                                'rgba(255, 206, 86, 0.8)',
+                                'rgba(255, 99, 132, 0.8)'
+                            ],
+                            borderColor: [
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 206, 86, 1)',
+                                'rgba(255, 99, 132, 1)'
+                            ],
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                            }
+                        }
+                    }
+                });
+            }
+        });
+        </script>
         <?php
     }
 

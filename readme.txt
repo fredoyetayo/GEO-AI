@@ -4,7 +4,7 @@ Tags: seo, ai, google ai overviews, perplexity, chatgpt, schema, meta tags
 Requires at least: 6.2
 Tested up to: 6.4
 Requires PHP: 8.1
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -106,6 +106,18 @@ The meta box works in Classic Editor, but the Answer Card block and sidebar audi
 6. Crawler Controls & robots.txt Preview
 
 == Changelog ==
+
+= 1.3.1 =
+* Added: Beautiful dashboard redesign with Chart.js visualizations
+* Added: Bar chart for score distribution analysis
+* Added: Doughnut chart for content quality overview
+* Added: Top Performers and Needs Attention sections
+* Added: Recent Activity feed with timestamps
+* Added: Custom GEO icon (globe with AI neural network)
+* Improved: Modern hero section with gradient background
+* Improved: Animated stat cards with hover effects
+* Improved: Progress bars for visual metrics
+* Improved: Responsive design for all screen sizes
 
 = 1.3.0 =
 * Added: Focus Keyword Analysis with 6-point scoring system

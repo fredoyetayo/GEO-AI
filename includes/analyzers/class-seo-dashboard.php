@@ -23,10 +23,14 @@ class SEO_Dashboard {
 	 */
 	public function get_dashboard_data() {
 		return array(
-			'overall_score'    => $this->calculate_overall_score(),
-			'issues'           => $this->get_site_issues(),
-			'post_stats'       => $this->get_post_statistics(),
-			'recommendations'  => $this->get_recommendations(),
+			'overall_score'      => $this->calculate_overall_score(),
+			'issues'             => $this->get_site_issues(),
+			'post_stats'         => $this->get_post_statistics(),
+			'recommendations'    => $this->get_recommendations(),
+			'score_distribution' => $this->get_score_distribution(),
+			'recent_activity'    => $this->get_recent_activity(),
+			'top_performers'     => $this->get_top_performers(),
+			'needs_attention'    => $this->get_needs_attention(),
 		);
 	}
 
@@ -383,5 +387,164 @@ class SEO_Dashboard {
 			AND pm.meta_key = '_geoai_readability_score'
 			AND CAST(pm.meta_value AS UNSIGNED) < 60"
 		);
+	}
+
+	/**
+	 * Get score distribution for chart.
+	 *
+	 * @return array Score ranges and counts.
+	 */
+	private function get_score_distribution() {
+		global $wpdb;
+
+		$post_types = get_post_types( array( 'public' => true ), 'names' );
+		$post_types = array_diff( $post_types, array( 'attachment' ) );
+		$post_types_str = "'" . implode( "','", array_map( 'esc_sql', $post_types ) ) . "'";
+
+		// Get keyword scores distribution
+		$keyword_scores = $wpdb->get_results(
+			"SELECT CAST(pm.meta_value AS UNSIGNED) as score
+			FROM {$wpdb->posts} p
+			INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+			WHERE p.post_status = 'publish'
+			AND p.post_type IN ({$post_types_str})
+			AND pm.meta_key = '_geoai_keyword_score'
+			AND pm.meta_value != ''",
+			ARRAY_A
+		);
+
+		// Get readability scores distribution
+		$readability_scores = $wpdb->get_results(
+			"SELECT CAST(pm.meta_value AS UNSIGNED) as score
+			FROM {$wpdb->posts} p
+			INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+			WHERE p.post_status = 'publish'
+			AND p.post_type IN ({$post_types_str})
+			AND pm.meta_key = '_geoai_readability_score'
+			AND pm.meta_value != ''",
+			ARRAY_A
+		);
+
+		// Categorize scores
+		$ranges = array(
+			'excellent' => array( 'min' => 80, 'max' => 100, 'keyword' => 0, 'readability' => 0 ),
+			'good'      => array( 'min' => 60, 'max' => 79, 'keyword' => 0, 'readability' => 0 ),
+			'fair'      => array( 'min' => 40, 'max' => 59, 'keyword' => 0, 'readability' => 0 ),
+			'poor'      => array( 'min' => 0, 'max' => 39, 'keyword' => 0, 'readability' => 0 ),
+		);
+
+		foreach ( $keyword_scores as $row ) {
+			$score = (int) $row['score'];
+			foreach ( $ranges as $key => $range ) {
+				if ( $score >= $range['min'] && $score <= $range['max'] ) {
+					$ranges[ $key ]['keyword']++;
+					break;
+				}
+			}
+		}
+
+		foreach ( $readability_scores as $row ) {
+			$score = (int) $row['score'];
+			foreach ( $ranges as $key => $range ) {
+				if ( $score >= $range['min'] && $score <= $range['max'] ) {
+					$ranges[ $key ]['readability']++;
+					break;
+				}
+			}
+		}
+
+		return $ranges;
+	}
+
+	/**
+	 * Get recent activity.
+	 *
+	 * @return array Recent posts analyzed.
+	 */
+	private function get_recent_activity() {
+		global $wpdb;
+
+		$post_types = get_post_types( array( 'public' => true ), 'names' );
+		$post_types = array_diff( $post_types, array( 'attachment' ) );
+		$post_types_str = "'" . implode( "','", array_map( 'esc_sql', $post_types ) ) . "'";
+
+		$results = $wpdb->get_results(
+			"SELECT p.ID, p.post_title, p.post_modified,
+			MAX(CASE WHEN pm.meta_key = '_geoai_keyword_score' THEN pm.meta_value END) as keyword_score,
+			MAX(CASE WHEN pm.meta_key = '_geoai_readability_score' THEN pm.meta_value END) as readability_score
+			FROM {$wpdb->posts} p
+			LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+			WHERE p.post_status = 'publish'
+			AND p.post_type IN ({$post_types_str})
+			AND pm.meta_key IN ('_geoai_keyword_score', '_geoai_readability_score')
+			GROUP BY p.ID
+			ORDER BY p.post_modified DESC
+			LIMIT 5",
+			ARRAY_A
+		);
+
+		return $results;
+	}
+
+	/**
+	 * Get top performing posts.
+	 *
+	 * @return array Top posts by score.
+	 */
+	private function get_top_performers() {
+		global $wpdb;
+
+		$post_types = get_post_types( array( 'public' => true ), 'names' );
+		$post_types = array_diff( $post_types, array( 'attachment' ) );
+		$post_types_str = "'" . implode( "','", array_map( 'esc_sql', $post_types ) ) . "'";
+
+		$results = $wpdb->get_results(
+			"SELECT p.ID, p.post_title,
+			MAX(CASE WHEN pm.meta_key = '_geoai_keyword_score' THEN CAST(pm.meta_value AS UNSIGNED) END) as keyword_score,
+			MAX(CASE WHEN pm.meta_key = '_geoai_readability_score' THEN CAST(pm.meta_value AS UNSIGNED) END) as readability_score
+			FROM {$wpdb->posts} p
+			INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+			WHERE p.post_status = 'publish'
+			AND p.post_type IN ({$post_types_str})
+			AND pm.meta_key IN ('_geoai_keyword_score', '_geoai_readability_score')
+			GROUP BY p.ID
+			HAVING keyword_score >= 80 OR readability_score >= 80
+			ORDER BY (COALESCE(keyword_score, 0) + COALESCE(readability_score, 0)) DESC
+			LIMIT 5",
+			ARRAY_A
+		);
+
+		return $results;
+	}
+
+	/**
+	 * Get posts needing attention.
+	 *
+	 * @return array Posts with low scores.
+	 */
+	private function get_needs_attention() {
+		global $wpdb;
+
+		$post_types = get_post_types( array( 'public' => true ), 'names' );
+		$post_types = array_diff( $post_types, array( 'attachment' ) );
+		$post_types_str = "'" . implode( "','", array_map( 'esc_sql', $post_types ) ) . "'";
+
+		$results = $wpdb->get_results(
+			"SELECT p.ID, p.post_title,
+			MAX(CASE WHEN pm.meta_key = '_geoai_keyword_score' THEN CAST(pm.meta_value AS UNSIGNED) END) as keyword_score,
+			MAX(CASE WHEN pm.meta_key = '_geoai_readability_score' THEN CAST(pm.meta_value AS UNSIGNED) END) as readability_score
+			FROM {$wpdb->posts} p
+			INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+			WHERE p.post_status = 'publish'
+			AND p.post_type IN ({$post_types_str})
+			AND pm.meta_key IN ('_geoai_keyword_score', '_geoai_readability_score')
+			GROUP BY p.ID
+			HAVING keyword_score < 60 OR readability_score < 60
+			ORDER BY (COALESCE(keyword_score, 0) + COALESCE(readability_score, 0)) ASC
+			LIMIT 5",
+			ARRAY_A
+		);
+
+		return $results;
 	}
 }
