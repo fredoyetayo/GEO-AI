@@ -1472,50 +1472,55 @@ class GeoAI_Admin {
 
         <script>
         jQuery(document).ready(function($) {
+            // Optimize Chart.js for performance
+            Chart.defaults.animation = false; // Disable animations to reduce CPU/memory
+            Chart.defaults.responsive = true;
+            Chart.defaults.maintainAspectRatio = false;
+
             // Score Distribution Chart
             const scoreCtx = document.getElementById('geoai-score-chart');
             if (scoreCtx) {
                 new Chart(scoreCtx, {
                     type: 'bar',
                     data: {
-                        labels: ['Excellent (80-100)', 'Good (60-79)', 'Fair (40-59)', 'Poor (0-39)'],
+                        labels: ['Excellent', 'Good', 'Fair', 'Poor'],
                         datasets: [{
-                            label: 'Keyword Scores',
+                            label: 'Keyword',
                             data: [
                                 <?php echo (int) $score_dist['excellent']['keyword']; ?>,
                                 <?php echo (int) $score_dist['good']['keyword']; ?>,
                                 <?php echo (int) $score_dist['fair']['keyword']; ?>,
                                 <?php echo (int) $score_dist['poor']['keyword']; ?>
                             ],
-                            backgroundColor: 'rgba(54, 162, 235, 0.8)',
-                            borderColor: 'rgba(54, 162, 235, 1)',
-                            borderWidth: 2
+                            backgroundColor: '#3699e7'
                         }, {
-                            label: 'Readability Scores',
+                            label: 'Readability',
                             data: [
                                 <?php echo (int) $score_dist['excellent']['readability']; ?>,
                                 <?php echo (int) $score_dist['good']['readability']; ?>,
                                 <?php echo (int) $score_dist['fair']['readability']; ?>,
                                 <?php echo (int) $score_dist['poor']['readability']; ?>
                             ],
-                            backgroundColor: 'rgba(255, 99, 132, 0.8)',
-                            borderColor: 'rgba(255, 99, 132, 1)',
-                            borderWidth: 2
+                            backgroundColor: '#ff6384'
                         }]
                     },
                     options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
+                        animation: false,
                         plugins: {
                             legend: {
-                                position: 'top',
+                                display: true,
+                                position: 'top'
+                            },
+                            tooltip: {
+                                enabled: true,
+                                mode: 'index'
                             }
                         },
                         scales: {
                             y: {
                                 beginAtZero: true,
                                 ticks: {
-                                    stepSize: 1
+                                    precision: 0
                                 }
                             }
                         }
@@ -1523,7 +1528,7 @@ class GeoAI_Admin {
                 });
             }
 
-            // Quality Overview Pie Chart
+            // Quality Overview Doughnut Chart
             const qualityCtx = document.getElementById('geoai-quality-chart');
             if (qualityCtx) {
                 const totalPosts = <?php echo (int) $data['post_stats']['total_posts']; ?>;
@@ -1533,7 +1538,7 @@ class GeoAI_Admin {
                 new Chart(qualityCtx, {
                     type: 'doughnut',
                     data: {
-                        labels: ['With Meta & Keyword', 'Only Meta', 'Only Keyword', 'Neither'],
+                        labels: ['Both', 'Meta Only', 'Keyword Only', 'Neither'],
                         datasets: [{
                             data: [
                                 Math.min(withMeta, withKeyword),
@@ -1541,27 +1546,14 @@ class GeoAI_Admin {
                                 Math.max(0, withKeyword - withMeta),
                                 totalPosts - withMeta - withKeyword + Math.min(withMeta, withKeyword)
                             ],
-                            backgroundColor: [
-                                'rgba(75, 192, 192, 0.8)',
-                                'rgba(54, 162, 235, 0.8)',
-                                'rgba(255, 206, 86, 0.8)',
-                                'rgba(255, 99, 132, 0.8)'
-                            ],
-                            borderColor: [
-                                'rgba(75, 192, 192, 1)',
-                                'rgba(54, 162, 235, 1)',
-                                'rgba(255, 206, 86, 1)',
-                                'rgba(255, 99, 132, 1)'
-                            ],
-                            borderWidth: 2
+                            backgroundColor: ['#4bc0c0', '#3699e7', '#ffce56', '#ff6384']
                         }]
                     },
                     options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
+                        animation: false,
                         plugins: {
                             legend: {
-                                position: 'bottom',
+                                position: 'bottom'
                             }
                         }
                     }
@@ -1579,19 +1571,11 @@ class GeoAI_Admin {
         $post_types = get_post_types( array( 'public' => true ), 'names' );
         
         foreach ( $post_types as $post_type ) {
+            // Single unified meta box
             add_meta_box(
-                'geoai_keyword_analysis',
-                __( 'Focus Keyword Analysis', 'geo-ai' ),
-                array( $this, 'render_keyword_meta_box' ),
-                $post_type,
-                'normal',
-                'high'
-            );
-
-            add_meta_box(
-                'geoai_readability_analysis',
-                __( 'Readability Analysis', 'geo-ai' ),
-                array( $this, 'render_readability_meta_box' ),
+                'geoai_seo_analysis',
+                __( 'GEO AI SEO Analysis', 'geo-ai' ),
+                array( $this, 'render_unified_seo_meta_box' ),
                 $post_type,
                 'normal',
                 'high'
@@ -1600,58 +1584,330 @@ class GeoAI_Admin {
     }
 
     /**
-     * Render keyword analysis meta box.
+     * Render unified SEO meta box with tabs.
      */
-    public function render_keyword_meta_box( $post ) {
+    public function render_unified_seo_meta_box( $post ) {
         wp_nonce_field( 'geoai_seo_meta', 'geoai_seo_nonce' );
         
+        // Get all data
         $focus_keyword = get_post_meta( $post->ID, '_geoai_focus_keyword', true );
         $keyword_score = get_post_meta( $post->ID, '_geoai_keyword_score', true );
         $keyword_data = get_post_meta( $post->ID, '_geoai_keyword_data', true );
+        $readability_score = get_post_meta( $post->ID, '_geoai_readability_score', true );
+        $readability_data = get_post_meta( $post->ID, '_geoai_readability_data', true );
         
         if ( $keyword_data ) {
             $keyword_data = json_decode( $keyword_data, true );
         }
-        ?>
-        <div class="geoai-keyword-analysis">
-            <p>
-                <label for="geoai_focus_keyword"><strong><?php esc_html_e( 'Focus Keyword:', 'geo-ai' ); ?></strong></label><br>
-                <input type="text" id="geoai_focus_keyword" name="geoai_focus_keyword" value="<?php echo esc_attr( $focus_keyword ); ?>" class="widefat" placeholder="<?php esc_attr_e( 'Enter your focus keyword', 'geo-ai' ); ?>" />
-                <button type="button" class="button button-secondary geoai-analyze-keyword" style="margin-top: 10px;">
-                    <?php esc_html_e( 'Analyze Keyword', 'geo-ai' ); ?>
-                </button>
-            </p>
+        if ( $readability_data ) {
+            $readability_data = json_decode( $readability_data, true );
+        }
 
-            <div id="geoai-keyword-results" <?php echo $keyword_score ? '' : 'style="display:none;"'; ?>>
-                <?php if ( $keyword_score ) : ?>
-                <div class="geoai-score-display">
-                    <span class="score-label"><?php esc_html_e( 'Keyword Score:', 'geo-ai' ); ?></span>
-                    <span class="score-value <?php echo esc_attr( $this->get_score_class( $keyword_score ) ); ?>">
-                        <?php echo esc_html( $keyword_score ); ?>/100
-                    </span>
+        // Get insights and linking data
+        $analyzer_insights = new \GeoAI\Analyzers\Content_Insights();
+        $insights = $analyzer_insights->analyze( $post->post_content, $post->post_title );
+        
+        $analyzer_linking = new \GeoAI\Analyzers\Internal_Linking();
+        $suggestions = $analyzer_linking->get_suggestions( $post->ID, $post->post_content );
+        $link_stats = $analyzer_linking->get_link_stats( $post->post_content );
+        
+        // Calculate overall score
+        $overall_score = 0;
+        $score_count = 0;
+        if ( $keyword_score ) {
+            $overall_score += (int) $keyword_score;
+            $score_count++;
+        }
+        if ( $readability_score ) {
+            $overall_score += (int) $readability_score;
+            $score_count++;
+        }
+        $overall_score = $score_count > 0 ? round( $overall_score / $score_count ) : 0;
+        ?>
+        
+        <div class="geoai-unified-seo">
+            <!-- Header with Overall Score -->
+            <div class="geoai-seo-header">
+                <div class="geoai-score-circle <?php echo $this->get_score_class( $overall_score ); ?>">
+                    <div class="score-value"><?php echo (int) $overall_score; ?></div>
+                    <div class="score-label"><?php esc_html_e( 'SEO Score', 'geo-ai' ); ?></div>
+                </div>
+                <div class="geoai-score-breakdown">
+                    <div class="score-item">
+                        <span class="score-badge <?php echo $this->get_score_class( $keyword_score ); ?>">
+                            <?php echo $keyword_score ? (int) $keyword_score : '-'; ?>
+                        </span>
+                        <span class="score-name"><?php esc_html_e( 'Keyword', 'geo-ai' ); ?></span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-badge <?php echo $this->get_score_class( $readability_score ); ?>">
+                            <?php echo $readability_score ? (int) $readability_score : '-'; ?>
+                        </span>
+                        <span class="score-name"><?php esc_html_e( 'Readability', 'geo-ai' ); ?></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="geoai-tab-nav">
+                <button type="button" class="geoai-tab-btn active" data-tab="keyword">
+                    <span class="dashicons dashicons-search"></span>
+                    <?php esc_html_e( 'Focus Keyword', 'geo-ai' ); ?>
+                </button>
+                <button type="button" class="geoai-tab-btn" data-tab="readability">
+                    <span class="dashicons dashicons-book"></span>
+                    <?php esc_html_e( 'Readability', 'geo-ai' ); ?>
+                </button>
+                <button type="button" class="geoai-tab-btn" data-tab="insights">
+                    <span class="dashicons dashicons-chart-bar"></span>
+                    <?php esc_html_e( 'Content Insights', 'geo-ai' ); ?>
+                </button>
+                <button type="button" class="geoai-tab-btn" data-tab="linking">
+                    <span class="dashicons dashicons-admin-links"></span>
+                    <?php esc_html_e( 'Internal Links', 'geo-ai' ); ?>
+                </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="geoai-tab-content">
+                <!-- Keyword Tab -->
+                <div class="geoai-tab-pane active" id="geoai-tab-keyword">
+                    <?php $this->render_keyword_tab_content( $post, $focus_keyword, $keyword_score, $keyword_data ); ?>
                 </div>
 
-                <?php if ( ! empty( $keyword_data['issues'] ) ) : ?>
-                <ul class="geoai-issues-list">
+                <!-- Readability Tab -->
+                <div class="geoai-tab-pane" id="geoai-tab-readability">
+                    <?php $this->render_readability_tab_content( $post, $readability_score, $readability_data ); ?>
+                </div>
+
+                <!-- Content Insights Tab -->
+                <div class="geoai-tab-pane" id="geoai-tab-insights">
+                    <?php $this->render_insights_tab_content( $insights ); ?>
+                </div>
+
+                <!-- Internal Linking Tab -->
+                <div class="geoai-tab-pane" id="geoai-tab-linking">
+                    <?php $this->render_linking_tab_content( $suggestions, $link_stats ); ?>
+                </div>
+            </div>
+        </div>
+
+        <script>
+        jQuery(document).ready(function($) {
+            // Tab switching
+            $('.geoai-tab-btn').on('click', function() {
+                var tab = $(this).data('tab');
+                
+                // Update buttons
+                $('.geoai-tab-btn').removeClass('active');
+                $(this).addClass('active');
+                
+                // Update content
+                $('.geoai-tab-pane').removeClass('active');
+                $('#geoai-tab-' + tab).addClass('active');
+            });
+        });
+        </script>
+        <?php
+    }
+
+    /**
+     * Render keyword tab content.
+     */
+    private function render_keyword_tab_content( $post, $focus_keyword, $keyword_score, $keyword_data ) {
+        ?>
+        <div class="geoai-tab-section">
+            <div class="geoai-input-group">
+                <label for="geoai_focus_keyword"><?php esc_html_e( 'Focus Keyword', 'geo-ai' ); ?></label>
+                <input type="text" id="geoai_focus_keyword" name="geoai_focus_keyword" value="<?php echo esc_attr( $focus_keyword ); ?>" class="geoai-input" placeholder="<?php esc_attr_e( 'Enter your focus keyword...', 'geo-ai' ); ?>" />
+                <button type="button" class="button button-primary geoai-analyze-keyword">
+                    <span class="dashicons dashicons-search"></span>
+                    <?php esc_html_e( 'Analyze', 'geo-ai' ); ?>
+                </button>
+            </div>
+
+            <div id="geoai-keyword-results" <?php echo $keyword_score ? '' : 'style="display:none;"'; ?>>
+                <?php if ( $keyword_score && ! empty( $keyword_data['issues'] ) ) : ?>
+                <div class="geoai-analysis-results">
                     <?php foreach ( $keyword_data['issues'] as $issue ) : ?>
-                    <li class="issue-<?php echo esc_attr( $issue['severity'] ); ?>">
-                        <span class="dashicons dashicons-<?php echo $issue['severity'] === 'good' ? 'yes' : 'warning'; ?>"></span>
-                        <?php echo esc_html( $issue['message'] ); ?>
-                    </li>
+                    <div class="geoai-check-item <?php echo esc_attr( $issue['severity'] ); ?>">
+                        <span class="check-icon dashicons dashicons-<?php echo $issue['severity'] === 'good' ? 'yes-alt' : ( $issue['severity'] === 'warning' ? 'warning' : 'dismiss' ); ?>"></span>
+                        <span class="check-text"><?php echo esc_html( $issue['message'] ); ?></span>
+                    </div>
                     <?php endforeach; ?>
-                </ul>
-                <?php endif; ?>
+                </div>
 
                 <?php if ( isset( $keyword_data['density'] ) ) : ?>
-                <p class="geoai-stat">
-                    <strong><?php esc_html_e( 'Keyword Density:', 'geo-ai' ); ?></strong>
-                    <?php echo esc_html( number_format( $keyword_data['density'], 2 ) ); ?>%
-                    (<?php echo esc_html( $keyword_data['occurrences'] ); ?> <?php esc_html_e( 'occurrences', 'geo-ai' ); ?>)
-                </p>
+                <div class="geoai-stat-box">
+                    <div class="stat-label"><?php esc_html_e( 'Keyword Density', 'geo-ai' ); ?></div>
+                    <div class="stat-value"><?php echo esc_html( number_format( $keyword_data['density'], 2 ) ); ?>%</div>
+                    <div class="stat-detail"><?php echo esc_html( $keyword_data['occurrences'] ); ?> <?php esc_html_e( 'occurrences', 'geo-ai' ); ?></div>
+                </div>
                 <?php endif; ?>
                 <?php endif; ?>
             </div>
         </div>
+        <?php
+    }
+
+    /**
+     * Render readability tab content.
+     */
+    private function render_readability_tab_content( $post, $readability_score, $readability_data ) {
+        ?>
+        <div class="geoai-tab-section">
+            <button type="button" class="button button-primary geoai-analyze-readability">
+                <span class="dashicons dashicons-book"></span>
+                <?php esc_html_e( 'Analyze Readability', 'geo-ai' ); ?>
+            </button>
+
+            <div id="geoai-readability-results" <?php echo $readability_score ? '' : 'style="display:none;"'; ?>>
+                <?php if ( $readability_score && ! empty( $readability_data['issues'] ) ) : ?>
+                <div class="geoai-analysis-results">
+                    <?php foreach ( $readability_data['issues'] as $issue ) : ?>
+                    <div class="geoai-check-item <?php echo esc_attr( $issue['severity'] ); ?>">
+                        <span class="check-icon dashicons dashicons-<?php echo $issue['severity'] === 'good' ? 'yes-alt' : ( $issue['severity'] === 'warning' ? 'warning' : 'dismiss' ); ?>"></span>
+                        <span class="check-text"><?php echo esc_html( $issue['message'] ); ?></span>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <div class="geoai-stats-grid">
+                    <?php if ( isset( $readability_data['flesch_score'] ) ) : ?>
+                    <div class="geoai-stat-box">
+                        <div class="stat-label"><?php esc_html_e( 'Flesch Reading Ease', 'geo-ai' ); ?></div>
+                        <div class="stat-value"><?php echo esc_html( number_format( $readability_data['flesch_score'], 1 ) ); ?></div>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if ( isset( $readability_data['word_count'] ) ) : ?>
+                    <div class="geoai-stat-box">
+                        <div class="stat-label"><?php esc_html_e( 'Word Count', 'geo-ai' ); ?></div>
+                        <div class="stat-value"><?php echo esc_html( number_format( $readability_data['word_count'] ) ); ?></div>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render insights tab content.
+     */
+    private function render_insights_tab_content( $insights ) {
+        ?>
+        <div class="geoai-tab-section">
+            <div class="geoai-stats-grid">
+                <div class="geoai-stat-box">
+                    <div class="stat-label"><?php esc_html_e( 'Words', 'geo-ai' ); ?></div>
+                    <div class="stat-value"><?php echo esc_html( number_format( $insights['content_metrics']['word_count'] ) ); ?></div>
+                </div>
+                <div class="geoai-stat-box">
+                    <div class="stat-label"><?php esc_html_e( 'Reading Time', 'geo-ai' ); ?></div>
+                    <div class="stat-value"><?php echo esc_html( $insights['content_metrics']['reading_time'] ); ?> min</div>
+                </div>
+                <div class="geoai-stat-box">
+                    <div class="stat-label"><?php esc_html_e( 'Vocabulary', 'geo-ai' ); ?></div>
+                    <div class="stat-value"><?php echo esc_html( $insights['content_metrics']['lexical_diversity'] ); ?>%</div>
+                </div>
+            </div>
+
+            <?php if ( ! empty( $insights['recommendations'] ) ) : ?>
+            <div class="geoai-recommendations">
+                <h4><?php esc_html_e( 'Recommendations', 'geo-ai' ); ?></h4>
+                <?php foreach ( $insights['recommendations'] as $rec ) : ?>
+                <div class="geoai-check-item <?php echo esc_attr( $rec['type'] ); ?>">
+                    <span class="check-icon dashicons dashicons-<?php echo $rec['type'] === 'success' ? 'yes-alt' : ( $rec['type'] === 'warning' ? 'warning' : 'info' ); ?>"></span>
+                    <span class="check-text"><?php echo esc_html( $rec['message'] ); ?></span>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+
+            <div class="geoai-word-cloud">
+                <h4><?php esc_html_e( 'Top Words', 'geo-ai' ); ?></h4>
+                <div class="word-tags">
+                    <?php foreach ( array_slice( $insights['word_frequency'], 0, 15 ) as $word_data ) : ?>
+                    <span class="word-tag">
+                        <?php echo esc_html( $word_data['word'] ); ?>
+                        <span class="word-count"><?php echo esc_html( $word_data['count'] ); ?></span>
+                    </span>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render linking tab content.
+     */
+    private function render_linking_tab_content( $suggestions, $link_stats ) {
+        ?>
+        <div class="geoai-tab-section">
+            <div class="geoai-stats-grid">
+                <div class="geoai-stat-box">
+                    <div class="stat-label"><?php esc_html_e( 'Internal Links', 'geo-ai' ); ?></div>
+                    <div class="stat-value"><?php echo esc_html( $link_stats['internal'] ); ?></div>
+                </div>
+                <div class="geoai-stat-box">
+                    <div class="stat-label"><?php esc_html_e( 'External Links', 'geo-ai' ); ?></div>
+                    <div class="stat-value"><?php echo esc_html( $link_stats['external'] ); ?></div>
+                </div>
+                <div class="geoai-stat-box">
+                    <div class="stat-label"><?php esc_html_e( 'Total Links', 'geo-ai' ); ?></div>
+                    <div class="stat-value"><?php echo esc_html( $link_stats['total'] ); ?></div>
+                </div>
+            </div>
+
+            <?php if ( ! empty( $suggestions ) ) : ?>
+            <div class="geoai-link-suggestions">
+                <h4><?php esc_html_e( 'Suggested Internal Links', 'geo-ai' ); ?></h4>
+                <?php foreach ( array_slice( $suggestions, 0, 5 ) as $suggestion ) : ?>
+                <div class="geoai-suggestion-card">
+                    <div class="suggestion-header">
+                        <strong><?php echo esc_html( $suggestion['title'] ); ?></strong>
+                        <span class="relevance-badge <?php echo $suggestion['relevance'] >= 0.7 ? 'high' : ( $suggestion['relevance'] >= 0.5 ? 'medium' : 'low' ); ?>">
+                            <?php echo esc_html( round( $suggestion['relevance'] * 100 ) ); ?>%
+                        </span>
+                    </div>
+                    <div class="suggestion-excerpt"><?php echo esc_html( $suggestion['excerpt'] ); ?></div>
+                    <button type="button" class="button button-small geoai-copy-link" data-url="<?php echo esc_attr( $suggestion['url'] ); ?>" data-anchor="<?php echo esc_attr( $suggestion['anchor'] ); ?>">
+                        <span class="dashicons dashicons-admin-links"></span>
+                        <?php esc_html_e( 'Copy Link', 'geo-ai' ); ?>
+                    </button>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php else : ?>
+            <p class="geoai-empty-state"><?php esc_html_e( 'No internal linking suggestions found.', 'geo-ai' ); ?></p>
+            <?php endif; ?>
+        </div>
+
+        <script>
+        jQuery(document).ready(function($) {
+            $('.geoai-copy-link').on('click', function() {
+                var url = $(this).data('url');
+                var anchor = $(this).data('anchor');
+                var linkHtml = '<a href="' + url + '">' + anchor + '</a>';
+                
+                var temp = $('<textarea>');
+                $('body').append(temp);
+                temp.val(linkHtml).select();
+                document.execCommand('copy');
+                temp.remove();
+                
+                var btn = $(this);
+                var originalHtml = btn.html();
+                btn.html('<span class="dashicons dashicons-yes"></span> <?php esc_html_e( 'Copied!', 'geo-ai' ); ?>');
+                setTimeout(function() {
+                    btn.html(originalHtml);
+                }, 2000);
+            });
+        });
+        </script>
         <?php
     }
 
@@ -1788,6 +2044,174 @@ class GeoAI_Admin {
 
         update_post_meta( $post_id, '_geoai_readability_score', $result['score'] );
         update_post_meta( $post_id, '_geoai_readability_data', wp_json_encode( $result ) );
+    }
+
+    /**
+     * Render internal linking suggestions meta box.
+     */
+    public function render_internal_linking_meta_box( $post ) {
+        $analyzer = new \GeoAI\Analyzers\Internal_Linking();
+        $suggestions = $analyzer->get_suggestions( $post->ID, $post->post_content );
+        $link_stats = $analyzer->get_link_stats( $post->post_content );
+        ?>
+        <div class="geoai-internal-linking">
+            <div class="geoai-link-stats" style="background: #f0f6fc; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                <h4 style="margin: 0 0 10px;"><?php esc_html_e( 'Link Statistics', 'geo-ai' ); ?></h4>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                    <div>
+                        <strong><?php echo esc_html( $link_stats['internal'] ); ?></strong><br>
+                        <small><?php esc_html_e( 'Internal Links', 'geo-ai' ); ?></small>
+                    </div>
+                    <div>
+                        <strong><?php echo esc_html( $link_stats['external'] ); ?></strong><br>
+                        <small><?php esc_html_e( 'External Links', 'geo-ai' ); ?></small>
+                    </div>
+                    <div>
+                        <strong><?php echo esc_html( $link_stats['total'] ); ?></strong><br>
+                        <small><?php esc_html_e( 'Total Links', 'geo-ai' ); ?></small>
+                    </div>
+                </div>
+            </div>
+
+            <?php if ( ! empty( $suggestions ) ) : ?>
+            <h4><?php esc_html_e( 'Suggested Internal Links', 'geo-ai' ); ?></h4>
+            <p class="description"><?php esc_html_e( 'Click to copy the link code to your clipboard:', 'geo-ai' ); ?></p>
+            <ul class="geoai-link-suggestions" style="list-style: none; margin: 0; padding: 0;">
+                <?php foreach ( $suggestions as $suggestion ) : ?>
+                <li style="padding: 12px; margin: 8px 0; background: #fff; border: 1px solid #ddd; border-radius: 4px;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; gap: 10px;">
+                        <div style="flex: 1;">
+                            <strong><?php echo esc_html( $suggestion['title'] ); ?></strong>
+                            <div style="font-size: 12px; color: #646970; margin: 5px 0;">
+                                <?php echo esc_html( $suggestion['excerpt'] ); ?>
+                            </div>
+                            <div style="font-size: 11px; color: #2271b1; margin-top: 5px;">
+                                <?php
+                                if ( ! empty( $suggestion['categories'] ) ) {
+                                    echo esc_html( implode( ', ', $suggestion['categories'] ) );
+                                }
+                                ?>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <span class="relevance-badge" style="display: inline-block; padding: 4px 8px; background: <?php echo $suggestion['relevance'] >= 0.7 ? '#00a32a' : ( $suggestion['relevance'] >= 0.5 ? '#2271b1' : '#dba617' ); ?>; color: white; border-radius: 3px; font-size: 11px; font-weight: 600;">
+                                <?php echo esc_html( round( $suggestion['relevance'] * 100 ) ); ?>% <?php esc_html_e( 'match', 'geo-ai' ); ?>
+                            </span>
+                            <br>
+                            <button type="button" class="button button-small geoai-copy-link" data-url="<?php echo esc_attr( $suggestion['url'] ); ?>" data-anchor="<?php echo esc_attr( $suggestion['anchor'] ); ?>" style="margin-top: 5px;">
+                                <?php esc_html_e( 'Copy Link', 'geo-ai' ); ?>
+                            </button>
+                        </div>
+                    </div>
+                </li>
+                <?php endforeach; ?>
+            </ul>
+            <?php else : ?>
+            <p class="description"><?php esc_html_e( 'No internal linking suggestions found. Try adding more content or publish more posts.', 'geo-ai' ); ?></p>
+            <?php endif; ?>
+        </div>
+
+        <script>
+        jQuery(document).ready(function($) {
+            $('.geoai-copy-link').on('click', function() {
+                var url = $(this).data('url');
+                var anchor = $(this).data('anchor');
+                var linkHtml = '<a href="' + url + '">' + anchor + '</a>';
+                
+                // Copy to clipboard
+                var temp = $('<textarea>');
+                $('body').append(temp);
+                temp.val(linkHtml).select();
+                document.execCommand('copy');
+                temp.remove();
+                
+                // Show feedback
+                var btn = $(this);
+                var originalText = btn.text();
+                btn.text('<?php esc_html_e( 'Copied!', 'geo-ai' ); ?>');
+                setTimeout(function() {
+                    btn.text(originalText);
+                }, 2000);
+            });
+        });
+        </script>
+        <?php
+    }
+
+    /**
+     * Render content insights meta box.
+     */
+    public function render_content_insights_meta_box( $post ) {
+        $analyzer = new \GeoAI\Analyzers\Content_Insights();
+        $insights = $analyzer->analyze( $post->post_content, $post->post_title );
+        ?>
+        <div class="geoai-content-insights">
+            <!-- Content Metrics -->
+            <div class="insights-metrics" style="background: #f0f6fc; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                <h4 style="margin: 0 0 10px;"><?php esc_html_e( 'Content Metrics', 'geo-ai' ); ?></h4>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 13px;">
+                    <div>
+                        <strong><?php echo esc_html( number_format( $insights['content_metrics']['word_count'] ) ); ?></strong><br>
+                        <small><?php esc_html_e( 'Words', 'geo-ai' ); ?></small>
+                    </div>
+                    <div>
+                        <strong><?php echo esc_html( $insights['content_metrics']['sentence_count'] ); ?></strong><br>
+                        <small><?php esc_html_e( 'Sentences', 'geo-ai' ); ?></small>
+                    </div>
+                    <div>
+                        <strong><?php echo esc_html( $insights['content_metrics']['reading_time'] ); ?> min</strong><br>
+                        <small><?php esc_html_e( 'Reading Time', 'geo-ai' ); ?></small>
+                    </div>
+                    <div>
+                        <strong><?php echo esc_html( $insights['content_metrics']['lexical_diversity'] ); ?>%</strong><br>
+                        <small><?php esc_html_e( 'Vocabulary', 'geo-ai' ); ?></small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommendations -->
+            <?php if ( ! empty( $insights['recommendations'] ) ) : ?>
+            <div class="insights-recommendations" style="margin-bottom: 15px;">
+                <h4><?php esc_html_e( 'Recommendations', 'geo-ai' ); ?></h4>
+                <ul style="margin: 0; padding-left: 20px;">
+                    <?php foreach ( $insights['recommendations'] as $rec ) : ?>
+                    <li style="margin: 5px 0; color: <?php echo $rec['type'] === 'warning' ? '#d63638' : ( $rec['type'] === 'success' ? '#00a32a' : '#646970' ); ?>;">
+                        <?php echo esc_html( $rec['message'] ); ?>
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            <?php endif; ?>
+
+            <!-- Top Words -->
+            <div class="insights-words">
+                <h4><?php esc_html_e( 'Top Words', 'geo-ai' ); ?></h4>
+                <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                    <?php foreach ( array_slice( $insights['word_frequency'], 0, 15 ) as $word_data ) : ?>
+                    <span style="display: inline-block; padding: 5px 10px; background: #f0f0f1; border-radius: 12px; font-size: 12px;">
+                        <strong><?php echo esc_html( $word_data['word'] ); ?></strong>
+                        <span style="color: #646970;">(<?php echo esc_html( $word_data['count'] ); ?>)</span>
+                    </span>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <!-- Top Phrases -->
+            <?php if ( ! empty( $insights['phrase_frequency'] ) ) : ?>
+            <div class="insights-phrases" style="margin-top: 15px;">
+                <h4><?php esc_html_e( 'Common Phrases', 'geo-ai' ); ?></h4>
+                <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                    <?php foreach ( array_slice( $insights['phrase_frequency'], 0, 10 ) as $phrase_data ) : ?>
+                    <span style="display: inline-block; padding: 5px 10px; background: #f0f6fc; border-radius: 12px; font-size: 12px; border: 1px solid #2271b1;">
+                        <strong><?php echo esc_html( $phrase_data['phrase'] ); ?></strong>
+                        <span style="color: #2271b1;">(<?php echo esc_html( $phrase_data['count'] ); ?>)</span>
+                    </span>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+        </div>
+        <?php
     }
 
     /**

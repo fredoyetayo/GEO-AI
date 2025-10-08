@@ -17,12 +17,37 @@ if ( ! defined( 'ABSPATH' ) ) {
 class SEO_Dashboard {
 
 	/**
+	 * Constructor.
+	 */
+	public function __construct() {
+		// Clear cache when posts are saved
+		add_action( 'save_post', array( $this, 'clear_cache' ) );
+		add_action( 'delete_post', array( $this, 'clear_cache' ) );
+	}
+
+	/**
+	 * Clear dashboard cache.
+	 */
+	public function clear_cache() {
+		delete_transient( 'geoai_dashboard_data' );
+	}
+
+	/**
 	 * Get site-wide SEO health data.
 	 *
 	 * @return array Dashboard data.
 	 */
 	public function get_dashboard_data() {
-		return array(
+		// Check cache first (5 minute expiration)
+		$cache_key = 'geoai_dashboard_data';
+		$cached_data = get_transient( $cache_key );
+		
+		if ( false !== $cached_data ) {
+			return $cached_data;
+		}
+
+		// Generate fresh data
+		$data = array(
 			'overall_score'      => $this->calculate_overall_score(),
 			'issues'             => $this->get_site_issues(),
 			'post_stats'         => $this->get_post_statistics(),
@@ -32,6 +57,11 @@ class SEO_Dashboard {
 			'top_performers'     => $this->get_top_performers(),
 			'needs_attention'    => $this->get_needs_attention(),
 		);
+
+		// Cache for 5 minutes
+		set_transient( $cache_key, $data, 5 * MINUTE_IN_SECONDS );
+
+		return $data;
 	}
 
 	/**
@@ -326,23 +356,16 @@ class SEO_Dashboard {
 		$post_types = array_diff( $post_types, array( 'attachment' ) );
 		$post_types_str = "'" . implode( "','", array_map( 'esc_sql', $post_types ) ) . "'";
 
-		$posts = $wpdb->get_results(
-			"SELECT ID, post_content FROM {$wpdb->posts}
+		// Use SQL to estimate word count (much faster than PHP)
+		// Approximate: LENGTH(content) / 5 (avg word length + space)
+		$low_count = $wpdb->get_var(
+			"SELECT COUNT(*) FROM {$wpdb->posts}
 			WHERE post_status = 'publish'
-			AND post_type IN ({$post_types_str})",
-			ARRAY_A
+			AND post_type IN ({$post_types_str})
+			AND CHAR_LENGTH(REPLACE(post_content, ' ', '')) / 5 < 300"
 		);
 
-		$low_count = 0;
-		foreach ( $posts as $post ) {
-			$text = wp_strip_all_tags( $post['post_content'] );
-			$word_count = str_word_count( $text );
-			if ( $word_count < 300 ) {
-				$low_count++;
-			}
-		}
-
-		return $low_count;
+		return (int) $low_count;
 	}
 
 	/**
@@ -401,9 +424,13 @@ class SEO_Dashboard {
 		$post_types = array_diff( $post_types, array( 'attachment' ) );
 		$post_types_str = "'" . implode( "','", array_map( 'esc_sql', $post_types ) ) . "'";
 
-		// Get keyword scores distribution
-		$keyword_scores = $wpdb->get_results(
-			"SELECT CAST(pm.meta_value AS UNSIGNED) as score
+		// Use SQL aggregation instead of PHP loops (much faster)
+		$keyword_dist = $wpdb->get_row(
+			"SELECT 
+				SUM(CASE WHEN CAST(pm.meta_value AS UNSIGNED) >= 80 THEN 1 ELSE 0 END) as excellent,
+				SUM(CASE WHEN CAST(pm.meta_value AS UNSIGNED) BETWEEN 60 AND 79 THEN 1 ELSE 0 END) as good,
+				SUM(CASE WHEN CAST(pm.meta_value AS UNSIGNED) BETWEEN 40 AND 59 THEN 1 ELSE 0 END) as fair,
+				SUM(CASE WHEN CAST(pm.meta_value AS UNSIGNED) < 40 THEN 1 ELSE 0 END) as poor
 			FROM {$wpdb->posts} p
 			INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
 			WHERE p.post_status = 'publish'
@@ -413,9 +440,12 @@ class SEO_Dashboard {
 			ARRAY_A
 		);
 
-		// Get readability scores distribution
-		$readability_scores = $wpdb->get_results(
-			"SELECT CAST(pm.meta_value AS UNSIGNED) as score
+		$readability_dist = $wpdb->get_row(
+			"SELECT 
+				SUM(CASE WHEN CAST(pm.meta_value AS UNSIGNED) >= 80 THEN 1 ELSE 0 END) as excellent,
+				SUM(CASE WHEN CAST(pm.meta_value AS UNSIGNED) BETWEEN 60 AND 79 THEN 1 ELSE 0 END) as good,
+				SUM(CASE WHEN CAST(pm.meta_value AS UNSIGNED) BETWEEN 40 AND 59 THEN 1 ELSE 0 END) as fair,
+				SUM(CASE WHEN CAST(pm.meta_value AS UNSIGNED) < 40 THEN 1 ELSE 0 END) as poor
 			FROM {$wpdb->posts} p
 			INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
 			WHERE p.post_status = 'publish'
@@ -425,35 +455,33 @@ class SEO_Dashboard {
 			ARRAY_A
 		);
 
-		// Categorize scores
-		$ranges = array(
-			'excellent' => array( 'min' => 80, 'max' => 100, 'keyword' => 0, 'readability' => 0 ),
-			'good'      => array( 'min' => 60, 'max' => 79, 'keyword' => 0, 'readability' => 0 ),
-			'fair'      => array( 'min' => 40, 'max' => 59, 'keyword' => 0, 'readability' => 0 ),
-			'poor'      => array( 'min' => 0, 'max' => 39, 'keyword' => 0, 'readability' => 0 ),
+		// Build ranges array
+		return array(
+			'excellent' => array(
+				'min'         => 80,
+				'max'         => 100,
+				'keyword'     => (int) ( $keyword_dist['excellent'] ?? 0 ),
+				'readability' => (int) ( $readability_dist['excellent'] ?? 0 ),
+			),
+			'good' => array(
+				'min'         => 60,
+				'max'         => 79,
+				'keyword'     => (int) ( $keyword_dist['good'] ?? 0 ),
+				'readability' => (int) ( $readability_dist['good'] ?? 0 ),
+			),
+			'fair' => array(
+				'min'         => 40,
+				'max'         => 59,
+				'keyword'     => (int) ( $keyword_dist['fair'] ?? 0 ),
+				'readability' => (int) ( $readability_dist['fair'] ?? 0 ),
+			),
+			'poor' => array(
+				'min'         => 0,
+				'max'         => 39,
+				'keyword'     => (int) ( $keyword_dist['poor'] ?? 0 ),
+				'readability' => (int) ( $readability_dist['poor'] ?? 0 ),
+			),
 		);
-
-		foreach ( $keyword_scores as $row ) {
-			$score = (int) $row['score'];
-			foreach ( $ranges as $key => $range ) {
-				if ( $score >= $range['min'] && $score <= $range['max'] ) {
-					$ranges[ $key ]['keyword']++;
-					break;
-				}
-			}
-		}
-
-		foreach ( $readability_scores as $row ) {
-			$score = (int) $row['score'];
-			foreach ( $ranges as $key => $range ) {
-				if ( $score >= $range['min'] && $score <= $range['max'] ) {
-					$ranges[ $key ]['readability']++;
-					break;
-				}
-			}
-		}
-
-		return $ranges;
 	}
 
 	/**

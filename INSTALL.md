@@ -12,7 +12,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/geo-ai.git
+git clone https://github.com/fredoyetayo/geo-ai.git
 cd geo-ai
 
 # Install JavaScript dependencies
