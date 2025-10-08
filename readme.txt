@@ -4,7 +4,7 @@ Tags: seo, ai, google ai overviews, perplexity, chatgpt, schema, meta tags
 Requires at least: 6.2
 Tested up to: 6.4
 Requires PHP: 8.1
-Stable tag: 1.4.1
+Stable tag: 1.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -106,6 +106,32 @@ The meta box works in Classic Editor, but the Answer Card block and sidebar audi
 6. Crawler Controls & robots.txt Preview
 
 == Changelog ==
+
+= 1.6.0 =
+* Added: AI-powered meta title and description generation
+* Added: One-click "Generate with AI" button in SEO meta box
+* Added: Real-time character counters for title/description
+* Added: API connection test button in settings
+* Improved: Gemini API implementation with better error handling
+* Improved: Added safety settings to prevent content blocking
+* Improved: Increased timeout to 45 seconds for reliability
+* Improved: Comprehensive error logging for debugging
+* Fixed: API response parsing with markdown cleanup
+* Fixed: JSON extraction from AI responses
+* Fixed: Length validation (70 chars title, 165 chars description)
+
+= 1.5.0 =
+* Added: Unified Yoast-style SEO meta box with tabs
+* Added: Beautiful gradient header with overall score display
+* Added: 4 intuitive tabs (Keyword, Readability, Insights, Links)
+* Added: Modern UI with color-coded check items
+* Added: Interactive stat boxes with hover effects
+* Added: Word cloud tags with hover states
+* Added: Suggestion cards with relevance badges
+* Improved: Consolidated 4 separate meta boxes into one
+* Improved: Better visual hierarchy and organization
+* Improved: Smooth animations and transitions
+* Improved: Fully responsive mobile design
 
 = 1.4.1 =
 * Performance: 5-minute caching for dashboard data (95% fewer queries)

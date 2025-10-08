@@ -153,13 +153,30 @@ class GeoAI_Meta {
         $robots      = get_post_meta( $post->ID, '_geoai_robots', true );
         ?>
         <div class="geoai-meta-box">
+            <div style="background: #f0f6fc; padding: 12px; border-radius: 4px; margin-bottom: 15px; border-left: 3px solid #667eea;">
+                <p style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <span class="dashicons dashicons-lightbulb" style="color: #667eea;"></span>
+                    <strong><?php esc_html_e( 'AI-Powered Generation', 'geo-ai' ); ?></strong>
+                </p>
+                <p style="margin: 8px 0 0; font-size: 13px; color: #646970;">
+                    <?php esc_html_e( 'Click the button below to automatically generate optimized meta title and description using Google Gemini AI.', 'geo-ai' ); ?>
+                </p>
+                <button type="button" id="geoai-generate-meta-btn" class="button button-primary" style="margin-top: 10px;" data-post-id="<?php echo esc_attr( $post->ID ); ?>">
+                    <span class="dashicons dashicons-admin-generic"></span>
+                    <?php esc_html_e( 'Generate with AI', 'geo-ai' ); ?>
+                </button>
+                <span id="geoai-generate-meta-status" style="margin-left: 10px; font-style: italic; color: #646970;"></span>
+            </div>
+
             <p>
-                <label for="geoai_title"><strong><?php esc_html_e( 'SEO Title', 'geo-ai' ); ?></strong></label><br/>
-                <input type="text" id="geoai_title" name="geoai_title" value="<?php echo esc_attr( $title ); ?>" class="large-text" />
+                <label for="geoai_title"><strong><?php esc_html_e( 'SEO Title', 'geo-ai' ); ?></strong> <span style="color: #646970; font-weight: normal;">(<?php echo mb_strlen( $title ); ?> chars)</span></label><br/>
+                <input type="text" id="geoai_title" name="geoai_title" value="<?php echo esc_attr( $title ); ?>" class="large-text" maxlength="70" />
+                <p class="description"><?php esc_html_e( 'Optimal length: 50-60 characters', 'geo-ai' ); ?></p>
             </p>
             <p>
-                <label for="geoai_meta_desc"><strong><?php esc_html_e( 'Meta Description', 'geo-ai' ); ?></strong></label><br/>
-                <textarea id="geoai_meta_desc" name="geoai_meta_desc" rows="3" class="large-text"><?php echo esc_textarea( $description ); ?></textarea>
+                <label for="geoai_meta_desc"><strong><?php esc_html_e( 'Meta Description', 'geo-ai' ); ?></strong> <span style="color: #646970; font-weight: normal;">(<?php echo mb_strlen( $description ); ?> chars)</span></label><br/>
+                <textarea id="geoai_meta_desc" name="geoai_meta_desc" rows="3" class="large-text" maxlength="165"><?php echo esc_textarea( $description ); ?></textarea>
+                <p class="description"><?php esc_html_e( 'Optimal length: 150-160 characters', 'geo-ai' ); ?></p>
             </p>
             <p>
                 <label for="geoai_robots"><strong><?php esc_html_e( 'Robots Meta', 'geo-ai' ); ?></strong></label><br/>
@@ -171,6 +188,61 @@ class GeoAI_Meta {
                 </select>
             </p>
         </div>
+
+        <script>
+        jQuery(document).ready(function($) {
+            // Character counters
+            function updateCharCount(inputId, labelSelector) {
+                var $input = $('#' + inputId);
+                var $label = $input.prev('label');
+                $input.on('input', function() {
+                    var length = $(this).val().length;
+                    $label.find('span').text('(' + length + ' chars)');
+                });
+            }
+            
+            updateCharCount('geoai_title', 'label');
+            updateCharCount('geoai_meta_desc', 'label');
+
+            // AI Generation
+            $('#geoai-generate-meta-btn').on('click', function() {
+                var $btn = $(this);
+                var $status = $('#geoai-generate-meta-status');
+                var postId = $btn.data('post-id');
+
+                $btn.prop('disabled', true).html('<span class="dashicons dashicons-update dashicons-spin"></span> <?php esc_html_e( 'Generating...', 'geo-ai' ); ?>');
+                $status.text('<?php esc_html_e( 'This may take 10-15 seconds...', 'geo-ai' ); ?>').css('color', '#2271b1');
+
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'geoai_generate_meta',
+                        post_id: postId,
+                        nonce: geoaiAdmin.nonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            $('#geoai_title').val(response.data.title).trigger('input');
+                            $('#geoai_meta_desc').val(response.data.description).trigger('input');
+                            $status.text('<?php esc_html_e( 'Generated successfully!', 'geo-ai' ); ?>').css('color', '#00a32a');
+                        } else {
+                            $status.text('<?php esc_html_e( 'Error: ', 'geo-ai' ); ?>' + response.data.message).css('color', '#d63638');
+                        }
+                    },
+                    error: function() {
+                        $status.text('<?php esc_html_e( 'Request failed. Please try again.', 'geo-ai' ); ?>').css('color', '#d63638');
+                    },
+                    complete: function() {
+                        $btn.prop('disabled', false).html('<span class="dashicons dashicons-admin-generic"></span> <?php esc_html_e( 'Generate with AI', 'geo-ai' ); ?>');
+                        setTimeout(function() {
+                            $status.fadeOut();
+                        }, 3000);
+                    }
+                });
+            });
+        });
+        </script>
         <?php
     }
 

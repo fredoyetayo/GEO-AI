@@ -5,6 +5,59 @@ All notable changes to GEO AI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2024-01-26
+
+### Added - Unified Yoast-Style SEO Interface
+
+#### Single Meta Box Design
+- **Consolidated all SEO features** into one beautiful meta box
+- **"GEO AI SEO Analysis"** replaces 4 separate meta boxes
+- **Gradient header** with overall SEO score display
+- **Large score circle** (100px) with glassmorphism effect
+- **Score breakdown badges** for Keyword and Readability scores
+
+#### Tab Navigation System
+- **4 intuitive tabs** with icons:
+  - Focus Keyword (search icon)
+  - Readability (book icon)
+  - Content Insights (chart icon)
+  - Internal Links (links icon)
+- **Active tab highlighting** with purple underline
+- **Smooth animations** on tab switching (fadeIn 0.3s)
+- **Hover effects** on tab buttons
+
+#### Modern UI Components
+- **Check items** with color-coded left borders (green/yellow/red/blue)
+- **Stat boxes** with gradient backgrounds and hover lift effects
+- **Word cloud tags** with interactive hover states
+- **Suggestion cards** with relevance badges (high/medium/low)
+- **Input groups** with focus states and shadows
+- **Empty states** for better UX
+
+#### Responsive Design
+- **Mobile-optimized** tab layout (2 columns on small screens)
+- **Flexible grid system** for stats (auto-fit minmax)
+- **Stacked header** on mobile devices
+- **Hidden icons** on small screens for space
+- **Touch-friendly** button sizes
+
+### Improved
+- Removed 4 separate meta boxes clutter
+- Better visual hierarchy with tabs
+- Consistent color scheme (purple/blue/green/yellow/red)
+- Professional gradient backgrounds
+- Smooth transitions and animations
+- Better accessibility with semantic HTML
+
+### Technical Details
+- **500+ lines of CSS** for unified interface
+- **Tab switching JavaScript** with jQuery
+- **Conditional rendering** based on data availability
+- **Score calculation** averages keyword + readability
+- **Color-coded severity** levels for all checks
+
+---
+
 ## [1.4.1] - 2024-01-26
 
 ### Performance Optimizations

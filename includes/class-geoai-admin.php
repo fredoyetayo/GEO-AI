@@ -35,6 +35,10 @@ class GeoAI_Admin {
         add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_editor_assets' ) );
         add_action( 'add_meta_boxes', array( $this, 'add_seo_meta_boxes' ) );
         add_action( 'save_post', array( $this, 'save_seo_meta' ), 10, 2 );
+        
+        // AJAX actions for AI features
+        add_action( 'wp_ajax_geoai_generate_meta', array( $this, 'ajax_generate_meta' ) );
+        add_action( 'wp_ajax_geoai_test_api', array( $this, 'ajax_test_api' ) );
     }
 
     public function add_admin_menu() {
@@ -386,11 +390,50 @@ class GeoAI_Admin {
                 </th>
                 <td>
                     <input type="text" id="geoai_api_key" name="geoai_api_key" value="<?php echo esc_attr( $decrypted_key ); ?>" class="regular-text" />
+                    <button type="button" id="geoai-test-api-btn" class="button button-secondary" style="margin-left: 10px;">
+                        <span class="dashicons dashicons-yes-alt"></span>
+                        <?php esc_html_e( 'Test Connection', 'geo-ai' ); ?>
+                    </button>
+                    <span id="geoai-test-api-status" style="margin-left: 10px; font-style: italic;"></span>
                     <p class="description">
-                        <?php esc_html_e( 'Your API key is encrypted when stored. Get one from Google AI Studio.', 'geo-ai' ); ?>
+                        <?php esc_html_e( 'Your API key is encrypted when stored. Get one from ', 'geo-ai' ); ?>
+                        <a href="https://ai.google.dev/gemini-api/docs/api-key" target="_blank"><?php esc_html_e( 'Google AI Studio', 'geo-ai' ); ?></a>.
                     </p>
                 </td>
             </tr>
+            <script>
+            jQuery(document).ready(function($) {
+                $('#geoai-test-api-btn').on('click', function() {
+                    var $btn = $(this);
+                    var $status = $('#geoai-test-api-status');
+
+                    $btn.prop('disabled', true).html('<span class="dashicons dashicons-update dashicons-spin"></span> <?php esc_html_e( 'Testing...', 'geo-ai' ); ?>');
+                    $status.text('').show();
+
+                    $.ajax({
+                        url: ajaxurl,
+                        type: 'POST',
+                        data: {
+                            action: 'geoai_test_api',
+                            nonce: geoaiAdmin.nonce
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                $status.text('✓ ' + response.data.message).css('color', '#00a32a');
+                            } else {
+                                $status.text('✗ Error: ' + response.data.message).css('color', '#d63638');
+                            }
+                        },
+                        error: function() {
+                            $status.text('✗ Request failed').css('color', '#d63638');
+                        },
+                        complete: function() {
+                            $btn.prop('disabled', false).html('<span class="dashicons dashicons-yes-alt"></span> <?php esc_html_e( 'Test Connection', 'geo-ai' ); ?>');
+                        }
+                    });
+                });
+            });
+            </script>
             <tr>
                 <th scope="row"><?php esc_html_e( 'Auto-run Audit', 'geo-ai' ); ?></th>
                 <td>
@@ -1588,6 +1631,7 @@ class GeoAI_Admin {
      */
     public function render_unified_seo_meta_box( $post ) {
         wp_nonce_field( 'geoai_seo_meta', 'geoai_seo_nonce' );
+        wp_nonce_field( 'geoai_meta_box', 'geoai_meta_box_nonce' );
         
         // Get all data
         $focus_keyword = get_post_meta( $post->ID, '_geoai_focus_keyword', true );
@@ -1595,6 +1639,11 @@ class GeoAI_Admin {
         $keyword_data = get_post_meta( $post->ID, '_geoai_keyword_data', true );
         $readability_score = get_post_meta( $post->ID, '_geoai_readability_score', true );
         $readability_data = get_post_meta( $post->ID, '_geoai_readability_data', true );
+        
+        // Meta data
+        $meta_title = get_post_meta( $post->ID, '_geoai_title', true );
+        $meta_description = get_post_meta( $post->ID, '_geoai_meta_desc', true );
+        $robots = get_post_meta( $post->ID, '_geoai_robots', true );
         
         if ( $keyword_data ) {
             $keyword_data = json_decode( $keyword_data, true );
@@ -1650,9 +1699,13 @@ class GeoAI_Admin {
 
             <!-- Tab Navigation -->
             <div class="geoai-tab-nav">
-                <button type="button" class="geoai-tab-btn active" data-tab="keyword">
+                <button type="button" class="geoai-tab-btn active" data-tab="meta">
+                    <span class="dashicons dashicons-admin-generic"></span>
+                    <?php esc_html_e( 'SEO Meta', 'geo-ai' ); ?>
+                </button>
+                <button type="button" class="geoai-tab-btn" data-tab="keyword">
                     <span class="dashicons dashicons-search"></span>
-                    <?php esc_html_e( 'Focus Keyword', 'geo-ai' ); ?>
+                    <?php esc_html_e( 'Keyword', 'geo-ai' ); ?>
                 </button>
                 <button type="button" class="geoai-tab-btn" data-tab="readability">
                     <span class="dashicons dashicons-book"></span>
@@ -1660,18 +1713,23 @@ class GeoAI_Admin {
                 </button>
                 <button type="button" class="geoai-tab-btn" data-tab="insights">
                     <span class="dashicons dashicons-chart-bar"></span>
-                    <?php esc_html_e( 'Content Insights', 'geo-ai' ); ?>
+                    <?php esc_html_e( 'Insights', 'geo-ai' ); ?>
                 </button>
                 <button type="button" class="geoai-tab-btn" data-tab="linking">
                     <span class="dashicons dashicons-admin-links"></span>
-                    <?php esc_html_e( 'Internal Links', 'geo-ai' ); ?>
+                    <?php esc_html_e( 'Links', 'geo-ai' ); ?>
                 </button>
             </div>
 
             <!-- Tab Content -->
             <div class="geoai-tab-content">
+                <!-- SEO Meta Tab -->
+                <div class="geoai-tab-pane active" id="geoai-tab-meta">
+                    <?php $this->render_meta_tab_content( $post, $meta_title, $meta_description, $robots ); ?>
+                </div>
+
                 <!-- Keyword Tab -->
-                <div class="geoai-tab-pane active" id="geoai-tab-keyword">
+                <div class="geoai-tab-pane" id="geoai-tab-keyword">
                     <?php $this->render_keyword_tab_content( $post, $focus_keyword, $keyword_score, $keyword_data ); ?>
                 </div>
 
@@ -1705,6 +1763,164 @@ class GeoAI_Admin {
                 // Update content
                 $('.geoai-tab-pane').removeClass('active');
                 $('#geoai-tab-' + tab).addClass('active');
+            });
+        });
+        </script>
+        <?php
+    }
+
+    /**
+     * Render meta tab content (SEO Title, Description, AI Generation).
+     */
+    private function render_meta_tab_content( $post, $meta_title, $meta_description, $robots ) {
+        ?>
+        <div class="geoai-tab-section">
+            <!-- AI Generation Banner -->
+            <div class="geoai-ai-banner">
+                <div class="ai-banner-icon">
+                    <span class="dashicons dashicons-lightbulb"></span>
+                </div>
+                <div class="ai-banner-content">
+                    <h4><?php esc_html_e( 'AI-Powered Generation', 'geo-ai' ); ?></h4>
+                    <p><?php esc_html_e( 'Let Google Gemini AI create optimized meta title and description for you.', 'geo-ai' ); ?></p>
+                </div>
+                <div class="ai-banner-action">
+                    <button type="button" id="geoai-generate-meta-btn" class="button button-primary button-hero" data-post-id="<?php echo esc_attr( $post->ID ); ?>">
+                        <span class="dashicons dashicons-admin-generic"></span>
+                        <?php esc_html_e( 'Generate with AI', 'geo-ai' ); ?>
+                    </button>
+                </div>
+            </div>
+            <div id="geoai-generate-meta-status" class="geoai-status-message" style="display:none;"></div>
+
+            <!-- SEO Title -->
+            <div class="geoai-field-group">
+                <label for="geoai_title" class="geoai-field-label">
+                    <strong><?php esc_html_e( 'SEO Title', 'geo-ai' ); ?></strong>
+                    <span class="char-counter" id="title-char-count"><?php echo mb_strlen( $meta_title ); ?> / 70</span>
+                </label>
+                <input type="text" id="geoai_title" name="geoai_title" value="<?php echo esc_attr( $meta_title ); ?>" class="geoai-input-large" maxlength="70" />
+                <p class="geoai-field-description">
+                    <?php esc_html_e( 'Optimal length: 50-60 characters. This appears in search results.', 'geo-ai' ); ?>
+                </p>
+                <div class="geoai-preview-box">
+                    <div class="preview-label"><?php esc_html_e( 'Preview:', 'geo-ai' ); ?></div>
+                    <div class="preview-title" id="title-preview"><?php echo esc_html( $meta_title ? $meta_title : $post->post_title ); ?></div>
+                </div>
+            </div>
+
+            <!-- Meta Description -->
+            <div class="geoai-field-group">
+                <label for="geoai_meta_desc" class="geoai-field-label">
+                    <strong><?php esc_html_e( 'Meta Description', 'geo-ai' ); ?></strong>
+                    <span class="char-counter" id="desc-char-count"><?php echo mb_strlen( $meta_description ); ?> / 165</span>
+                </label>
+                <textarea id="geoai_meta_desc" name="geoai_meta_desc" rows="3" class="geoai-textarea-large" maxlength="165"><?php echo esc_textarea( $meta_description ); ?></textarea>
+                <p class="geoai-field-description">
+                    <?php esc_html_e( 'Optimal length: 150-160 characters. Include a call-to-action.', 'geo-ai' ); ?>
+                </p>
+                <div class="geoai-preview-box">
+                    <div class="preview-label"><?php esc_html_e( 'Preview:', 'geo-ai' ); ?></div>
+                    <div class="preview-url"><?php echo esc_url( get_permalink( $post->ID ) ); ?></div>
+                    <div class="preview-description" id="desc-preview"><?php echo esc_html( $meta_description ? $meta_description : wp_trim_words( $post->post_excerpt ? $post->post_excerpt : $post->post_content, 20 ) ); ?></div>
+                </div>
+            </div>
+
+            <!-- Robots Meta -->
+            <div class="geoai-field-group">
+                <label for="geoai_robots" class="geoai-field-label">
+                    <strong><?php esc_html_e( 'Robots Meta', 'geo-ai' ); ?></strong>
+                </label>
+                <select id="geoai_robots" name="geoai_robots" class="geoai-select">
+                    <option value="" <?php selected( $robots, '' ); ?>><?php esc_html_e( 'Default (index, follow)', 'geo-ai' ); ?></option>
+                    <option value="noindex,follow" <?php selected( $robots, 'noindex,follow' ); ?>><?php esc_html_e( 'No Index, Follow', 'geo-ai' ); ?></option>
+                    <option value="index,nofollow" <?php selected( $robots, 'index,nofollow' ); ?>><?php esc_html_e( 'Index, No Follow', 'geo-ai' ); ?></option>
+                    <option value="noindex,nofollow" <?php selected( $robots, 'noindex,nofollow' ); ?>><?php esc_html_e( 'No Index, No Follow', 'geo-ai' ); ?></option>
+                </select>
+                <p class="geoai-field-description">
+                    <?php esc_html_e( 'Control how search engines index this page.', 'geo-ai' ); ?>
+                </p>
+            </div>
+        </div>
+
+        <script>
+        jQuery(document).ready(function($) {
+            // Character counters and live preview
+            function updateCharCount(inputId, counterId, previewId) {
+                var $input = $('#' + inputId);
+                var $counter = $('#' + counterId);
+                var $preview = $('#' + previewId);
+                
+                $input.on('input', function() {
+                    var length = $(this).val().length;
+                    var maxLength = $input.attr('maxlength');
+                    $counter.text(length + ' / ' + maxLength);
+                    
+                    // Update color based on length
+                    if (inputId === 'geoai_title') {
+                        if (length >= 50 && length <= 60) {
+                            $counter.css('color', '#00a32a');
+                        } else if (length > 60) {
+                            $counter.css('color', '#d63638');
+                        } else {
+                            $counter.css('color', '#f59e0b');
+                        }
+                    } else {
+                        if (length >= 150 && length <= 160) {
+                            $counter.css('color', '#00a32a');
+                        } else if (length > 160) {
+                            $counter.css('color', '#d63638');
+                        } else {
+                            $counter.css('color', '#f59e0b');
+                        }
+                    }
+                    
+                    // Update preview
+                    if ($preview.length) {
+                        $preview.text($(this).val() || $preview.data('default'));
+                    }
+                });
+            }
+            
+            updateCharCount('geoai_title', 'title-char-count', 'title-preview');
+            updateCharCount('geoai_meta_desc', 'desc-char-count', 'desc-preview');
+
+            // AI Generation
+            $('#geoai-generate-meta-btn').on('click', function() {
+                var $btn = $(this);
+                var $status = $('#geoai-generate-meta-status');
+                var postId = $btn.data('post-id');
+
+                $btn.prop('disabled', true).html('<span class="dashicons dashicons-update dashicons-spin"></span> <?php esc_html_e( 'Generating...', 'geo-ai' ); ?>');
+                $status.removeClass('success error').addClass('info').html('<span class="dashicons dashicons-info"></span> <?php esc_html_e( 'AI is analyzing your content... This may take 10-15 seconds.', 'geo-ai' ); ?>').show();
+
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'geoai_generate_meta',
+                        post_id: postId,
+                        nonce: geoaiAdmin.nonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            $('#geoai_title').val(response.data.title).trigger('input');
+                            $('#geoai_meta_desc').val(response.data.description).trigger('input');
+                            $status.removeClass('info error').addClass('success').html('<span class="dashicons dashicons-yes-alt"></span> <?php esc_html_e( 'Generated successfully! Review and edit as needed.', 'geo-ai' ); ?>');
+                        } else {
+                            $status.removeClass('info success').addClass('error').html('<span class="dashicons dashicons-dismiss"></span> <?php esc_html_e( 'Error: ', 'geo-ai' ); ?>' + response.data.message);
+                        }
+                    },
+                    error: function() {
+                        $status.removeClass('info success').addClass('error').html('<span class="dashicons dashicons-dismiss"></span> <?php esc_html_e( 'Request failed. Please check your API key and try again.', 'geo-ai' ); ?>');
+                    },
+                    complete: function() {
+                        $btn.prop('disabled', false).html('<span class="dashicons dashicons-admin-generic"></span> <?php esc_html_e( 'Generate with AI', 'geo-ai' ); ?>');
+                        setTimeout(function() {
+                            $status.fadeOut();
+                        }, 5000);
+                    }
+                });
             });
         });
         </script>
@@ -2227,5 +2443,50 @@ class GeoAI_Admin {
         } else {
             return 'score-poor';
         }
+    }
+
+    /**
+     * AJAX: Generate AI-powered meta content
+     */
+    public function ajax_generate_meta() {
+        check_ajax_referer( 'geoai-admin', 'nonce' );
+
+        if ( ! current_user_can( 'edit_posts' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Permission denied.', 'geo-ai' ) ) );
+        }
+
+        $post_id = isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : 0;
+        if ( ! $post_id ) {
+            wp_send_json_error( array( 'message' => __( 'Invalid post ID.', 'geo-ai' ) ) );
+        }
+
+        $analyzer = \GeoAI\Core\GeoAI_Analyzer::get_instance();
+        $result = $analyzer->generate_meta_content( $post_id );
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+        }
+
+        wp_send_json_success( $result );
+    }
+
+    /**
+     * AJAX: Test API connection
+     */
+    public function ajax_test_api() {
+        check_ajax_referer( 'geoai-admin', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Permission denied.', 'geo-ai' ) ) );
+        }
+
+        $analyzer = \GeoAI\Core\GeoAI_Analyzer::get_instance();
+        $result = $analyzer->test_api_connection();
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+        }
+
+        wp_send_json_success( $result );
     }
 }
