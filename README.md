@@ -316,7 +316,7 @@ This plugin is licensed under the **GPL v2 or later**.
 
 ```
 GEO AI (AI SEO)
-Copyright (C) 2024 GEO AI Team
+Copyright (C) 2025 GEO AI Team
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
