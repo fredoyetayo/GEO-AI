@@ -96,25 +96,78 @@ class GeoAI_Admin {
                 'sanitize_callback' => array( $this, 'sanitize_api_key' ),
             )
         );
+        // Register remaining settings with explicit sanitization callbacks
+        register_setting( 'geoai_settings', 'geoai_autorun_on_save', array(
+            'type' => 'boolean',
+            'sanitize_callback' => array( $this, 'sanitize_bool' ),
+            'default' => 0,
+        ) );
 
-        $settings = array(
-            'geoai_autorun_on_save',
-            'geoai_compat_mode',
-            'geoai_titles_templates',
-            'geoai_meta_templates',
-            'geoai_social_defaults',
-            'geoai_schema_defaults',
-            'geoai_sitemaps',
-            'geoai_crawler_prefs',
-            'geoai_redirects',
-            'geoai_404_settings',
-            'geoai_roles_caps',
-            'geoai_debug_mode',
-        );
+        register_setting( 'geoai_settings', 'geoai_compat_mode', array(
+            'type' => 'string',
+            'sanitize_callback' => array( $this, 'sanitize_compat_mode' ),
+            'default' => 'standalone',
+        ) );
 
-        foreach ( $settings as $setting ) {
-            register_setting( 'geoai_settings', $setting );
-        }
+        register_setting( 'geoai_settings', 'geoai_titles_templates', array(
+            'type' => 'array',
+            'sanitize_callback' => array( $this, 'sanitize_titles_templates' ),
+            'default' => array(),
+        ) );
+
+        register_setting( 'geoai_settings', 'geoai_meta_templates', array(
+            'type' => 'array',
+            'sanitize_callback' => array( $this, 'sanitize_meta_templates' ),
+            'default' => array(),
+        ) );
+
+        register_setting( 'geoai_settings', 'geoai_social_defaults', array(
+            'type' => 'array',
+            'sanitize_callback' => array( $this, 'sanitize_social_defaults' ),
+            'default' => array(),
+        ) );
+
+        register_setting( 'geoai_settings', 'geoai_schema_defaults', array(
+            'type' => 'array',
+            'sanitize_callback' => array( $this, 'sanitize_schema_defaults' ),
+            'default' => array(),
+        ) );
+
+        register_setting( 'geoai_settings', 'geoai_sitemaps', array(
+            'type' => 'array',
+            'sanitize_callback' => array( $this, 'sanitize_sitemaps' ),
+            'default' => array(),
+        ) );
+
+        register_setting( 'geoai_settings', 'geoai_crawler_prefs', array(
+            'type' => 'array',
+            'sanitize_callback' => array( $this, 'sanitize_crawler_prefs' ),
+            'default' => array(),
+        ) );
+
+        register_setting( 'geoai_settings', 'geoai_redirects', array(
+            'type' => 'array',
+            'sanitize_callback' => array( $this, 'sanitize_redirects' ),
+            'default' => array(),
+        ) );
+
+        register_setting( 'geoai_settings', 'geoai_404_settings', array(
+            'type' => 'array',
+            'sanitize_callback' => array( $this, 'sanitize_404_settings' ),
+            'default' => array(),
+        ) );
+
+        register_setting( 'geoai_settings', 'geoai_roles_caps', array(
+            'type' => 'array',
+            'sanitize_callback' => array( $this, 'sanitize_roles_caps' ),
+            'default' => array(),
+        ) );
+
+        register_setting( 'geoai_settings', 'geoai_debug_mode', array(
+            'type' => 'boolean',
+            'sanitize_callback' => array( $this, 'sanitize_bool' ),
+            'default' => 0,
+        ) );
     }
 
     /**
@@ -182,7 +235,7 @@ class GeoAI_Admin {
         if ( 'geo-ai_page_geoai-dashboard' === $hook ) {
             wp_enqueue_script(
                 'chartjs',
-                'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
+                GEOAI_PLUGIN_URL . 'assets/js/chart.umd.min.js',
                 array(),
                 '4.4.0',
                 true
@@ -672,7 +725,7 @@ class GeoAI_Admin {
                         <div class="geoai-image-preview-container">
                             <?php if ( $image_preview ) : ?>
                                 <div id="geoai-og-preview-wrap">
-                                    <?php echo $image_preview; ?>
+                                    <?php echo wp_kses_post( $image_preview ); ?>
                                     <button type="button" class="button geoai-remove-image"><?php esc_html_e( 'Remove', 'geo-ai' ); ?></button>
                                 </div>
                             <?php else : ?>
@@ -773,6 +826,7 @@ class GeoAI_Admin {
                 <td><label><input type="checkbox" name="geoai_sitemaps[images]" value="1" <?php checked( $settings['images'] ?? true, true ); ?> /> <?php esc_html_e( 'Add image URLs to sitemaps', 'geo-ai' ); ?></label></td>
             </tr>
         </table>
+        <?php // translators: %s: The sitemap URL wrapped in <code> tags. ?>
         <p><?php printf( esc_html__( 'Sitemap URL: %s', 'geo-ai' ), '<code>' . esc_url( home_url( '/sitemap.xml' ) ) . '</code>' ); ?></p>
         <?php
     }
@@ -984,7 +1038,7 @@ class GeoAI_Admin {
                             ?>
                             <tr>
                                 <td>
-                                    <strong><a href="<?php echo esc_url( get_edit_post_link( $post_id ) ); ?>" target="_blank"><?php the_title(); ?></a></strong>
+                                    <strong><a href="<?php echo esc_url( get_edit_post_link( $post_id ) ); ?>" target="_blank"><?php echo esc_html( get_the_title() ); ?></a></strong>
                                     <br/>
                                     <small><?php echo esc_html( get_the_date() ); ?></small>
                                 </td>
@@ -1022,7 +1076,7 @@ class GeoAI_Admin {
                     )
                 );
                 if ( $page_links ) {
-                    echo '<div class="tablenav"><div class="tablenav-pages">' . $page_links . '</div></div>';
+                    echo '<div class="tablenav"><div class="tablenav-pages">' . wp_kses_post( $page_links ) . '</div></div>';
                 }
             }
             ?>
@@ -1071,8 +1125,8 @@ class GeoAI_Admin {
             echo '<div class="notice notice-success is-dismissible"><p>';
             printf(
                 /* translators: %d: Number of posts updated */
-                esc_html( _n( '%d post updated.', '%d posts updated.', $updated, 'geo-ai' ) ),
-                $updated
+                esc_html( _n( '%d post updated.', '%d posts updated.', absint( $updated ), 'geo-ai' ) ),
+                absint( $updated )
             );
             echo '</p></div>';
         }
@@ -1266,8 +1320,8 @@ class GeoAI_Admin {
         printf(
             /* translators: 1: Number of posts updated, 2: Number of posts skipped */
             esc_html__( 'CSV imported. %1$d posts updated, %2$d skipped.', 'geo-ai' ),
-            $updated,
-            $skipped
+            absint( $updated ),
+            absint( $skipped )
         );
         echo '</p></div>';
     }
@@ -1295,9 +1349,131 @@ class GeoAI_Admin {
         printf(
             /* translators: %d: Number of audit caches cleared */
             esc_html__( '%d audit caches cleared.', 'geo-ai' ),
-            $deleted
+            absint( $deleted )
         );
         echo '</p></div>';
+    }
+
+    /**
+     * Sanitizers for settings API
+     */
+    public function sanitize_bool( $value ) {
+        return ! empty( $value ) ? 1 : 0;
+    }
+
+    public function sanitize_compat_mode( $value ) {
+        $value = sanitize_text_field( (string) $value );
+        return in_array( $value, array( 'standalone', 'coexist' ), true ) ? $value : 'standalone';
+    }
+
+    public function sanitize_titles_templates( $input ) {
+        $out = array();
+        if ( is_array( $input ) ) {
+            foreach ( $input as $k => $v ) {
+                $out[ sanitize_key( $k ) ] = sanitize_text_field( (string) $v );
+            }
+        }
+        return $out;
+    }
+
+    public function sanitize_meta_templates( $input ) {
+        $out = array();
+        if ( is_array( $input ) ) {
+            foreach ( $input as $k => $v ) {
+                $out[ sanitize_key( $k ) ] = sanitize_textarea_field( (string) $v );
+            }
+        }
+        return $out;
+    }
+
+    public function sanitize_social_defaults( $input ) {
+        $out = array();
+        if ( is_array( $input ) ) {
+            $out['og_image_id'] = isset( $input['og_image_id'] ) ? absint( $input['og_image_id'] ) : 0;
+            $out['og_image']    = isset( $input['og_image'] ) ? esc_url_raw( $input['og_image'] ) : '';
+            $out['tw_card']     = isset( $input['tw_card'] ) ? sanitize_text_field( $input['tw_card'] ) : 'summary_large_image';
+            $out['tw_site']     = isset( $input['tw_site'] ) ? sanitize_text_field( $input['tw_site'] ) : '';
+            $out['tw_creator']  = isset( $input['tw_creator'] ) ? sanitize_text_field( $input['tw_creator'] ) : '';
+        }
+        return $out;
+    }
+
+    public function sanitize_schema_defaults( $input ) {
+        $keys = array( 'article','faq','howto','product','localbusiness','organization','website' );
+        $out = array();
+        foreach ( $keys as $k ) {
+            $out[ $k ] = ! empty( $input[ $k ] ) ? 1 : 0;
+        }
+        return $out;
+    }
+
+    public function sanitize_sitemaps( $input ) {
+        $out = array();
+        $out['enabled']    = ! empty( $input['enabled'] ) ? 1 : 0;
+        $out['images']     = ! empty( $input['images'] ) ? 1 : 0;
+        $out['post_types'] = array();
+        if ( isset( $input['post_types'] ) && is_array( $input['post_types'] ) ) {
+            foreach ( $input['post_types'] as $pt ) {
+                $out['post_types'][] = sanitize_key( $pt );
+            }
+        }
+        $out['taxonomies'] = array();
+        if ( isset( $input['taxonomies'] ) && is_array( $input['taxonomies'] ) ) {
+            foreach ( $input['taxonomies'] as $tx ) {
+                $out['taxonomies'][] = sanitize_key( $tx );
+            }
+        }
+        $out['ping_google'] = ! empty( $input['ping_google'] ) ? 1 : 0;
+        $out['ping_bing']   = ! empty( $input['ping_bing'] ) ? 1 : 0;
+        return $out;
+    }
+
+    public function sanitize_crawler_prefs( $input ) {
+        $keys = array( 'block_perplexity','block_gptbot','block_ccbot','block_anthropic' );
+        $out = array();
+        foreach ( $keys as $k ) {
+            $out[ $k ] = ! empty( $input[ $k ] ) ? 1 : 0;
+        }
+        return $out;
+    }
+
+    public function sanitize_redirects( $input ) {
+        $out = array();
+        if ( is_array( $input ) ) {
+            foreach ( $input as $i => $row ) {
+                $i = sanitize_key( $i );
+                $out[ $i ] = array(
+                    'from' => isset( $row['from'] ) ? esc_url_raw( $row['from'] ) : '',
+                    'to'   => isset( $row['to'] ) ? esc_url_raw( $row['to'] ) : '',
+                    'type' => isset( $row['type'] ) ? ( in_array( (int) $row['type'], array(301,302), true ) ? (int) $row['type'] : 301 ) : 301,
+                );
+            }
+        }
+        return $out;
+    }
+
+    public function sanitize_404_settings( $input ) {
+        $out = array();
+        $out['enabled']   = ! empty( $input['enabled'] ) ? 1 : 0;
+        $out['retention'] = isset( $input['retention'] ) ? absint( $input['retention'] ) : 30;
+        $out['max_logs']  = isset( $input['max_logs'] ) ? absint( $input['max_logs'] ) : 1000;
+        return $out;
+    }
+
+    public function sanitize_roles_caps( $input ) {
+        $out = array();
+        if ( is_array( $input ) ) {
+            foreach ( $input as $role => $caps ) {
+                $role = sanitize_key( $role );
+                $out[ $role ] = array();
+                if ( is_array( $caps ) ) {
+                    foreach ( $caps as $cap ) {
+                        $out[ $role ][] = sanitize_key( $cap );
+                    }
+                }
+            }
+        }
+        return $out;
     }
 
     private function render_advanced_tab() {
@@ -1677,20 +1853,20 @@ class GeoAI_Admin {
         <div class="geoai-unified-seo">
             <!-- Header with Overall Score -->
             <div class="geoai-seo-header">
-                <div class="geoai-score-circle <?php echo $this->get_score_class( $overall_score ); ?>">
-                    <div class="score-value"><?php echo (int) $overall_score; ?></div>
+                <div class="geoai-score-circle <?php echo esc_attr( $this->get_score_class( $overall_score ) ); ?>">
+                    <div class="score-value"><?php echo esc_html( (int) $overall_score ); ?></div>
                     <div class="score-label"><?php esc_html_e( 'SEO Score', 'geo-ai' ); ?></div>
                 </div>
                 <div class="geoai-score-breakdown">
                     <div class="score-item">
-                        <span class="score-badge <?php echo $this->get_score_class( $keyword_score ); ?>">
-                            <?php echo $keyword_score ? (int) $keyword_score : '-'; ?>
+                        <span class="score-badge <?php echo esc_attr( $this->get_score_class( $keyword_score ) ); ?>">
+                            <?php echo esc_html( $keyword_score ? (int) $keyword_score : '-' ); ?>
                         </span>
                         <span class="score-name"><?php esc_html_e( 'Keyword', 'geo-ai' ); ?></span>
                     </div>
                     <div class="score-item">
-                        <span class="score-badge <?php echo $this->get_score_class( $readability_score ); ?>">
-                            <?php echo $readability_score ? (int) $readability_score : '-'; ?>
+                        <span class="score-badge <?php echo esc_attr( $this->get_score_class( $readability_score ) ); ?>">
+                            <?php echo esc_html( $readability_score ? (int) $readability_score : '-' ); ?>
                         </span>
                         <span class="score-name"><?php esc_html_e( 'Readability', 'geo-ai' ); ?></span>
                     </div>
@@ -1942,12 +2118,13 @@ class GeoAI_Admin {
                 </button>
             </div>
 
-            <div id="geoai-keyword-results" <?php echo $keyword_score ? '' : 'style="display:none;"'; ?>>
+            <?php $geoai_kw_style = $keyword_score ? '' : 'display:none;'; ?>
+            <div id="geoai-keyword-results" <?php if ( $geoai_kw_style ) { echo 'style="' . esc_attr( $geoai_kw_style ) . '"'; } ?>>
                 <?php if ( $keyword_score && ! empty( $keyword_data['issues'] ) ) : ?>
                 <div class="geoai-analysis-results">
                     <?php foreach ( $keyword_data['issues'] as $issue ) : ?>
                     <div class="geoai-check-item <?php echo esc_attr( $issue['severity'] ); ?>">
-                        <span class="check-icon dashicons dashicons-<?php echo $issue['severity'] === 'good' ? 'yes-alt' : ( $issue['severity'] === 'warning' ? 'warning' : 'dismiss' ); ?>"></span>
+                        <span class="check-icon dashicons dashicons-<?php echo esc_attr( $issue['severity'] === 'good' ? 'yes-alt' : ( $issue['severity'] === 'warning' ? 'warning' : 'dismiss' ) ); ?>"></span>
                         <span class="check-text"><?php echo esc_html( $issue['message'] ); ?></span>
                     </div>
                     <?php endforeach; ?>
@@ -1977,12 +2154,13 @@ class GeoAI_Admin {
                 <?php esc_html_e( 'Analyze Readability', 'geo-ai' ); ?>
             </button>
 
-            <div id="geoai-readability-results" <?php echo $readability_score ? '' : 'style="display:none;"'; ?>>
+            <?php $geoai_read_style = $readability_score ? '' : 'display:none;'; ?>
+            <div id="geoai-readability-results" <?php if ( $geoai_read_style ) { echo 'style="' . esc_attr( $geoai_read_style ) . '"'; } ?>>
                 <?php if ( $readability_score && ! empty( $readability_data['issues'] ) ) : ?>
                 <div class="geoai-analysis-results">
                     <?php foreach ( $readability_data['issues'] as $issue ) : ?>
                     <div class="geoai-check-item <?php echo esc_attr( $issue['severity'] ); ?>">
-                        <span class="check-icon dashicons dashicons-<?php echo $issue['severity'] === 'good' ? 'yes-alt' : ( $issue['severity'] === 'warning' ? 'warning' : 'dismiss' ); ?>"></span>
+                        <span class="check-icon dashicons dashicons-<?php echo esc_attr( $issue['severity'] === 'good' ? 'yes-alt' : ( $issue['severity'] === 'warning' ? 'warning' : 'dismiss' ) ); ?>"></span>
                         <span class="check-text"><?php echo esc_html( $issue['message'] ); ?></span>
                     </div>
                     <?php endforeach; ?>
@@ -2310,7 +2488,8 @@ class GeoAI_Admin {
                             </div>
                         </div>
                         <div style="text-align: right;">
-                            <span class="relevance-badge" style="display: inline-block; padding: 4px 8px; background: <?php echo $suggestion['relevance'] >= 0.7 ? '#00a32a' : ( $suggestion['relevance'] >= 0.5 ? '#2271b1' : '#dba617' ); ?>; color: white; border-radius: 3px; font-size: 11px; font-weight: 600;">
+                            <?php $geoai_rel_color = ( $suggestion['relevance'] >= 0.7 ? '#00a32a' : ( $suggestion['relevance'] >= 0.5 ? '#2271b1' : '#dba617' ) ); ?>
+                            <span class="relevance-badge" style="display: inline-block; padding: 4px 8px; background: <?php echo esc_attr( $geoai_rel_color ); ?>; color: white; border-radius: 3px; font-size: 11px; font-weight: 600;">
                                 <?php echo esc_html( round( $suggestion['relevance'] * 100 ) ); ?>% <?php esc_html_e( 'match', 'geo-ai' ); ?>
                             </span>
                             <br>

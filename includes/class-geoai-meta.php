@@ -169,12 +169,14 @@ class GeoAI_Meta {
             </div>
 
             <p>
-                <label for="geoai_title"><strong><?php esc_html_e( 'SEO Title', 'geo-ai' ); ?></strong> <span style="color: #646970; font-weight: normal;">(<?php echo mb_strlen( $title ); ?> chars)</span></label><br/>
+                <?php $geoai_title_len = mb_strlen( (string) $title ); ?>
+                <label for="geoai_title"><strong><?php esc_html_e( 'SEO Title', 'geo-ai' ); ?></strong> <span style="color: #646970; font-weight: normal;">(<?php echo esc_html( $geoai_title_len ); ?> chars)</span></label><br/>
                 <input type="text" id="geoai_title" name="geoai_title" value="<?php echo esc_attr( $title ); ?>" class="large-text" maxlength="70" />
                 <p class="description"><?php esc_html_e( 'Optimal length: 50-60 characters', 'geo-ai' ); ?></p>
             </p>
             <p>
-                <label for="geoai_meta_desc"><strong><?php esc_html_e( 'Meta Description', 'geo-ai' ); ?></strong> <span style="color: #646970; font-weight: normal;">(<?php echo mb_strlen( $description ); ?> chars)</span></label><br/>
+                <?php $geoai_desc_len = mb_strlen( (string) $description ); ?>
+                <label for="geoai_meta_desc"><strong><?php esc_html_e( 'Meta Description', 'geo-ai' ); ?></strong> <span style="color: #646970; font-weight: normal;">(<?php echo esc_html( $geoai_desc_len ); ?> chars)</span></label><br/>
                 <textarea id="geoai_meta_desc" name="geoai_meta_desc" rows="3" class="large-text" maxlength="165"><?php echo esc_textarea( $description ); ?></textarea>
                 <p class="description"><?php esc_html_e( 'Optimal length: 150-160 characters', 'geo-ai' ); ?></p>
             </p>
@@ -247,7 +249,7 @@ class GeoAI_Meta {
     }
 
     public function save_meta_box( $post_id ) {
-        if ( ! isset( $_POST['geoai_meta_box_nonce'] ) || ! wp_verify_nonce( $_POST['geoai_meta_box_nonce'], 'geoai_meta_box' ) ) {
+        if ( ! isset( $_POST['geoai_meta_box_nonce'] ) || ! wp_verify_nonce( wp_unslash( $_POST['geoai_meta_box_nonce'] ), 'geoai_meta_box' ) ) {
             return;
         }
 

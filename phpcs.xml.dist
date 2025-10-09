@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<ruleset name="GEO AI">
+  <description>Project PHPCS configuration for GEO AI plugin</description>
+
+  <file>geo-ai.php</file>
+  <file>includes</file>
+
+  <arg name="extensions" value="php"/>
+  <arg value="-s"/>
+  <arg value="-p"/>
+
+  <!-- Base WordPress coding standards (Core subset) -->
+  <rule ref="WordPress-Core">
+    <!-- Our repo uses spaces; allow space indentation -->
+    <exclude name="Generic.WhiteSpace.DisallowSpaceIndent"/>
+    <!-- Relax docblock requirement for functions -->
+    <exclude name="Squiz.Commenting.FunctionComment.Missing"/>
+  </rule>
+</ruleset>

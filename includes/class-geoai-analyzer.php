@@ -153,6 +153,7 @@ class GeoAI_Analyzer {
         $status_code = wp_remote_retrieve_response_code( $response );
         if ( $status_code !== 200 ) {
             error_log( 'GEO AI: API HTTP Error ' . $status_code . ' - ' . wp_remote_retrieve_body( $response ) );
+            // translators: %d: HTTP status code from remote API response.
             return new \WP_Error( 'api_error', sprintf( __( 'API returned status code %d', 'geo-ai' ), $status_code ) );
         }
 
@@ -361,6 +362,7 @@ Return the JSON now:',
         if ( $status_code !== 200 ) {
             $body = wp_remote_retrieve_body( $response );
             error_log( 'GEO AI Meta Generation: HTTP Error ' . $status_code . ' - ' . $body );
+            // translators: %d: HTTP status code from remote API response.
             return new \WP_Error( 'api_error', sprintf( __( 'API returned status code %d', 'geo-ai' ), $status_code ) );
         }
 
@@ -464,6 +466,7 @@ Return the JSON now:',
 
         $status_code = wp_remote_retrieve_response_code( $response );
         if ( $status_code !== 200 ) {
+            // translators: %d: HTTP status code from remote API response.
             return new \WP_Error( 'api_error', sprintf( __( 'API returned status code %d', 'geo-ai' ), $status_code ) );
         }
 

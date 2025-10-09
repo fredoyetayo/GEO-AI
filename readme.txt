@@ -1,6 +1,6 @@
 === GEO AI (AI SEO) ===
 Contributors: geoaiteam
-Tags: seo, ai, google ai overviews, perplexity, chatgpt, schema, meta tags
+Tags: seo, ai, search, schema, content
 Requires at least: 6.2
 Tested up to: 6.4
 Requires PHP: 8.1

@@ -1,0 +1,1464 @@
+# Copyright (C) 2025 Fred Oyetayo
+# This file is distributed under the GPL v2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: GEO AI (AI SEO) 1.6.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/GEO-AI\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2025-10-09T16:14:08+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: geo-ai\n"
+
+#. Plugin Name of the plugin
+#: geo-ai.php
+msgid "GEO AI (AI SEO)"
+msgstr ""
+
+#. Plugin URI of the plugin
+#. Author URI of the plugin
+#: geo-ai.php
+msgid "https://fredoyetayo.com"
+msgstr ""
+
+#. Description of the plugin
+#: geo-ai.php
+msgid "Modern SEO plugin optimized for AI answer engines (Google AI Overviews, Perplexity, ChatGPT) with classic SEO essentials."
+msgstr ""
+
+#. Author of the plugin
+#: geo-ai.php
+msgid "Fred Oyetayo"
+msgstr ""
+
+#. translators: %d: current word count
+#: includes/analyzers/class-content-insights.php:215
+#, php-format
+msgid "Content is short (%d words). Aim for at least 300 words for better SEO."
+msgstr ""
+
+#: includes/analyzers/class-content-insights.php:222
+msgid "Excellent! Long-form content (1500+ words) tends to rank better."
+msgstr ""
+
+#. translators: %s: lexical diversity percentage
+#: includes/analyzers/class-content-insights.php:232
+#, php-format
+msgid "Low vocabulary diversity (%s%%). Try using more varied words."
+msgstr ""
+
+#: includes/analyzers/class-content-insights.php:242
+msgid "Sentences are quite long. Break them up for better readability."
+msgstr ""
+
+#: includes/analyzers/class-content-insights.php:250
+msgid "Paragraphs are too long. Aim for 100-150 words per paragraph."
+msgstr ""
+
+#. translators: %d: reading time in minutes
+#: includes/analyzers/class-content-insights.php:260
+#, php-format
+msgid "Long read (%d min). Consider adding a table of contents."
+msgstr ""
+
+#: includes/analyzers/class-keyword-analyzer.php:34
+msgid "No focus keyword set."
+msgstr ""
+
+#. translators: %s: focus keyword
+#: includes/analyzers/class-keyword-analyzer.php:115
+#, php-format
+msgid "Focus keyword \"%s\" not found in title."
+msgstr ""
+
+#: includes/analyzers/class-keyword-analyzer.php:129
+msgid "Focus keyword appears at the beginning of title. Great!"
+msgstr ""
+
+#: includes/analyzers/class-keyword-analyzer.php:139
+msgid "Focus keyword found in title."
+msgstr ""
+
+#: includes/analyzers/class-keyword-analyzer.php:158
+msgid "No meta description set."
+msgstr ""
+
+#: includes/analyzers/class-keyword-analyzer.php:170
+msgid "Focus keyword not found in meta description."
+msgstr ""
+
+#: includes/analyzers/class-keyword-analyzer.php:180
+msgid "Focus keyword found in meta description."
+msgstr ""
+
+#: includes/analyzers/class-keyword-analyzer.php:202
+msgid "Focus keyword not found in URL."
+msgstr ""
+
+#: includes/analyzers/class-keyword-analyzer.php:212
+msgid "Focus keyword found in URL."
+msgstr ""
+
+#: includes/analyzers/class-keyword-analyzer.php:239
+msgid "Focus keyword not found in first paragraph."
+msgstr ""
+
+#: includes/analyzers/class-keyword-analyzer.php:249
+msgid "Focus keyword found in first paragraph."
+msgstr ""
+
+#. translators: %s: density percentage
+#: includes/analyzers/class-keyword-analyzer.php:284
+#, php-format
+msgid "Keyword density is too low (%.2f%%). Aim for 0.5-2.5%%."
+msgstr ""
+
+#. translators: %s: density percentage
+#: includes/analyzers/class-keyword-analyzer.php:301
+#, php-format
+msgid "Keyword density is too high (%.2f%%). This may be seen as keyword stuffing."
+msgstr ""
+
+#. translators: %s: density percentage
+#: includes/analyzers/class-keyword-analyzer.php:317
+#, php-format
+msgid "Keyword density is optimal (%.2f%%)."
+msgstr ""
+
+#: includes/analyzers/class-keyword-analyzer.php:361
+msgid "Focus keyword not found in content."
+msgstr ""
+
+#: includes/analyzers/class-keyword-analyzer.php:372
+msgid "Focus keyword only appears in one section. Distribute it throughout the content."
+msgstr ""
+
+#: includes/analyzers/class-keyword-analyzer.php:383
+msgid "Focus keyword appears in 2 out of 3 sections."
+msgstr ""
+
+#: includes/analyzers/class-keyword-analyzer.php:393
+msgid "Focus keyword is well distributed throughout the content."
+msgstr ""
+
+#: includes/analyzers/class-readability-analyzer.php:35
+msgid "No content to analyze."
+msgstr ""
+
+#. translators: %s: Flesch score
+#: includes/analyzers/class-readability-analyzer.php:133
+#, php-format
+msgid "Readability is good (Flesch score: %.1f)."
+msgstr ""
+
+#. translators: %s: Flesch score
+#: includes/analyzers/class-readability-analyzer.php:149
+#, php-format
+msgid "Readability is acceptable (Flesch score: %.1f)."
+msgstr ""
+
+#. translators: %s: Flesch score
+#: includes/analyzers/class-readability-analyzer.php:164
+#, php-format
+msgid "Content is difficult to read (Flesch score: %.1f). Aim for 60+."
+msgstr ""
+
+#. translators: %s: percentage of long sentences
+#: includes/analyzers/class-readability-analyzer.php:207
+#, php-format
+msgid "%.0f%% of sentences are too long (>20 words). Try to keep them shorter."
+msgstr ""
+
+#. translators: %s: average sentence length
+#: includes/analyzers/class-readability-analyzer.php:222
+#, php-format
+msgid "Sentence length is good (avg: %.1f words)."
+msgstr ""
+
+#. translators: %s: percentage of long paragraphs
+#: includes/analyzers/class-readability-analyzer.php:267
+#, php-format
+msgid "%.0f%% of paragraphs are too long (>150 words). Break them up for better readability."
+msgstr ""
+
+#: includes/analyzers/class-readability-analyzer.php:279
+msgid "Paragraph length is good."
+msgstr ""
+
+#: includes/analyzers/class-readability-analyzer.php:305
+msgid "Content is short, subheadings are optional."
+msgstr ""
+
+#: includes/analyzers/class-readability-analyzer.php:318
+msgid "No subheadings found. Add H2-H6 tags to improve structure."
+msgstr ""
+
+#: includes/analyzers/class-readability-analyzer.php:329
+msgid "Add more subheadings. Aim for one every 250-300 words."
+msgstr ""
+
+#. translators: %d: number of subheadings
+#: includes/analyzers/class-readability-analyzer.php:341
+#, php-format
+msgid "Good use of subheadings (%d found)."
+msgstr ""
+
+#. translators: %s: percentage of passive voice
+#: includes/analyzers/class-readability-analyzer.php:388
+#, php-format
+msgid "%.0f%% of sentences use passive voice. Try to use active voice more."
+msgstr ""
+
+#: includes/analyzers/class-readability-analyzer.php:400
+msgid "Good use of active voice."
+msgstr ""
+
+#. translators: %s: percentage of sentences with transitions
+#: includes/analyzers/class-readability-analyzer.php:449
+#, php-format
+msgid "Only %.0f%% of sentences contain transition words. Aim for 30%% or more."
+msgstr ""
+
+#: includes/analyzers/class-readability-analyzer.php:461
+msgid "Good use of transition words."
+msgstr ""
+
+#. translators: %d: number of posts
+#: includes/analyzers/class-seo-dashboard.php:116
+#, php-format
+msgid "%d post is missing a meta description."
+msgid_plural "%d posts are missing meta descriptions."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of duplicate titles
+#: includes/analyzers/class-seo-dashboard.php:137
+#, php-format
+msgid "%d posts have duplicate titles."
+msgstr ""
+
+#. translators: %d: number of posts
+#: includes/analyzers/class-seo-dashboard.php:153
+#, php-format
+msgid "%d post has less than 300 words."
+msgid_plural "%d posts have less than 300 words."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of posts
+#: includes/analyzers/class-seo-dashboard.php:173
+#, php-format
+msgid "%d post is missing a focus keyword."
+msgid_plural "%d posts are missing focus keywords."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of posts
+#: includes/analyzers/class-seo-dashboard.php:193
+#, php-format
+msgid "%d post has readability issues."
+msgid_plural "%d posts have readability issues."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/analyzers/class-seo-dashboard.php:268
+msgid "Add Meta Descriptions"
+msgstr ""
+
+#: includes/analyzers/class-seo-dashboard.php:269
+msgid "Meta descriptions improve click-through rates from search results. Use the Bulk Editor to add them quickly."
+msgstr ""
+
+#: includes/analyzers/class-seo-dashboard.php:276
+msgid "Fix Duplicate Titles"
+msgstr ""
+
+#: includes/analyzers/class-seo-dashboard.php:277
+msgid "Duplicate titles confuse search engines. Make each title unique and descriptive."
+msgstr ""
+
+#: includes/analyzers/class-seo-dashboard.php:284
+msgid "Expand Thin Content"
+msgstr ""
+
+#: includes/analyzers/class-seo-dashboard.php:285
+msgid "Posts with less than 300 words may not rank well. Add more valuable content or consolidate pages."
+msgstr ""
+
+#: includes/analyzers/class-seo-dashboard.php:291
+msgid "Set Focus Keywords"
+msgstr ""
+
+#: includes/analyzers/class-seo-dashboard.php:292
+msgid "Focus keywords help you optimize content for specific search terms. Add them in the post editor."
+msgstr ""
+
+#: includes/class-geoai-admin.php:70
+msgid "GEO AI Settings"
+msgstr ""
+
+#: includes/class-geoai-admin.php:71
+#: src/editor.js:67
+msgid "GEO AI"
+msgstr ""
+
+#: includes/class-geoai-admin.php:82
+#: includes/class-geoai-admin.php:83
+msgid "SEO Dashboard"
+msgstr ""
+
+#: includes/class-geoai-admin.php:196
+msgid "Existing API key could not be decrypted. Please re-enter your key."
+msgstr ""
+
+#: includes/class-geoai-admin.php:216
+msgid "Error encrypting API key. Please check server configuration."
+msgstr ""
+
+#: includes/class-geoai-admin.php:306
+msgid "You do not have sufficient permissions to access this page."
+msgstr ""
+
+#: includes/class-geoai-admin.php:333
+msgid "General"
+msgstr ""
+
+#: includes/class-geoai-admin.php:334
+msgid "Titles & Meta"
+msgstr ""
+
+#: includes/class-geoai-admin.php:335
+msgid "Social"
+msgstr ""
+
+#: includes/class-geoai-admin.php:336
+msgid "Schema"
+msgstr ""
+
+#: includes/class-geoai-admin.php:337
+msgid "Sitemaps"
+msgstr ""
+
+#: includes/class-geoai-admin.php:338
+msgid "Crawlers & Robots"
+msgstr ""
+
+#: includes/class-geoai-admin.php:339
+msgid "Redirects & 404"
+msgstr ""
+
+#: includes/class-geoai-admin.php:340
+msgid "Bulk Editor"
+msgstr ""
+
+#: includes/class-geoai-admin.php:341
+msgid "Tools"
+msgstr ""
+
+#: includes/class-geoai-admin.php:342
+msgid "Advanced"
+msgstr ""
+
+#: includes/class-geoai-admin.php:365
+msgid "SEO Plugin Detected:"
+msgstr ""
+
+#. translators: %s: List of detected plugins
+#: includes/class-geoai-admin.php:369
+#, php-format
+msgid "We detected the following SEO plugins: %s. Enable \"Coexist Mode\" in General settings to prevent conflicts."
+msgstr ""
+
+#: includes/class-geoai-admin.php:429
+msgid "Stored API key could not be decrypted. Please re-enter your key."
+msgstr ""
+
+#: includes/class-geoai-admin.php:442
+msgid "Google Gemini API Key"
+msgstr ""
+
+#: includes/class-geoai-admin.php:448
+#: includes/class-geoai-admin.php:484
+msgid "Test Connection"
+msgstr ""
+
+#: includes/class-geoai-admin.php:452
+msgid "Your API key is encrypted when stored. Get one from "
+msgstr ""
+
+#: includes/class-geoai-admin.php:453
+msgid "Google AI Studio"
+msgstr ""
+
+#: includes/class-geoai-admin.php:463
+msgid "Testing..."
+msgstr ""
+
+#: includes/class-geoai-admin.php:491
+msgid "Auto-run Audit"
+msgstr ""
+
+#: includes/class-geoai-admin.php:495
+msgid "Run AI audit automatically when publishing or updating posts"
+msgstr ""
+
+#: includes/class-geoai-admin.php:501
+msgid "Compatibility Mode"
+msgstr ""
+
+#: includes/class-geoai-admin.php:505
+msgid "Standalone (Full Control)"
+msgstr ""
+
+#: includes/class-geoai-admin.php:506
+msgid "Coexist (Suppress Overlapping Outputs)"
+msgstr ""
+
+#: includes/class-geoai-admin.php:509
+msgid "Choose \"Coexist\" if using another SEO plugin to avoid duplicate meta tags."
+msgstr ""
+
+#: includes/class-geoai-admin.php:521
+msgid "Title & Meta Description Templates"
+msgstr ""
+
+#: includes/class-geoai-admin.php:526
+msgid "Search Engine Optimization"
+msgstr ""
+
+#: includes/class-geoai-admin.php:527
+msgid "Templates define how your titles and descriptions appear in search results. Well-optimized titles and descriptions can improve your click-through rate by 20-30%."
+msgstr ""
+
+#: includes/class-geoai-admin.php:534
+msgid "Available Variables (Click to expand)"
+msgstr ""
+
+#: includes/class-geoai-admin.php:540
+msgid "Post/page title"
+msgstr ""
+
+#: includes/class-geoai-admin.php:544
+msgid "Site name"
+msgstr ""
+
+#: includes/class-geoai-admin.php:548
+msgid "Separator (|)"
+msgstr ""
+
+#: includes/class-geoai-admin.php:552
+msgid "Post excerpt"
+msgstr ""
+
+#: includes/class-geoai-admin.php:556
+msgid "Primary category"
+msgstr ""
+
+#: includes/class-geoai-admin.php:560
+msgid "First tag"
+msgstr ""
+
+#: includes/class-geoai-admin.php:564
+msgid "Publish date"
+msgstr ""
+
+#: includes/class-geoai-admin.php:568
+msgid "Author name"
+msgstr ""
+
+#: includes/class-geoai-admin.php:572
+msgid "Site description"
+msgstr ""
+
+#: includes/class-geoai-admin.php:578
+msgid "Title Templates"
+msgstr ""
+
+#: includes/class-geoai-admin.php:582
+msgid "Post Title"
+msgstr ""
+
+#: includes/class-geoai-admin.php:583
+msgid "Optimal length: 50-60 characters. Include your main keyword near the beginning."
+msgstr ""
+
+#: includes/class-geoai-admin.php:590
+#: includes/class-geoai-admin.php:605
+#: includes/class-geoai-admin.php:620
+#: includes/class-geoai-admin.php:635
+#: includes/class-geoai-admin.php:654
+#: includes/class-geoai-admin.php:666
+msgid "characters"
+msgstr ""
+
+#: includes/class-geoai-admin.php:597
+msgid "Page Title"
+msgstr ""
+
+#: includes/class-geoai-admin.php:598
+msgid "Pages often target broader topics. Keep titles descriptive and clear."
+msgstr ""
+
+#: includes/class-geoai-admin.php:612
+msgid "Archive Title"
+msgstr ""
+
+#: includes/class-geoai-admin.php:613
+msgid "Used for category, tag, and author archives. Make it clear what content visitors will find."
+msgstr ""
+
+#: includes/class-geoai-admin.php:627
+msgid "Homepage Title"
+msgstr ""
+
+#: includes/class-geoai-admin.php:628
+msgid "Your most important page! Make it compelling and include your main keywords."
+msgstr ""
+
+#: includes/class-geoai-admin.php:642
+msgid "Meta Description Templates"
+msgstr ""
+
+#: includes/class-geoai-admin.php:646
+msgid "Post Description"
+msgstr ""
+
+#: includes/class-geoai-admin.php:647
+msgid "Optimal length: 150-160 characters. Include a call-to-action and main keywords naturally."
+msgstr ""
+
+#: includes/class-geoai-admin.php:661
+msgid "Page Description"
+msgstr ""
+
+#: includes/class-geoai-admin.php:676
+msgid "SEO Best Practices"
+msgstr ""
+
+#: includes/class-geoai-admin.php:678
+msgid "Keep titles between 50-60 characters to avoid truncation in search results"
+msgstr ""
+
+#: includes/class-geoai-admin.php:679
+msgid "Place important keywords at the beginning of titles for better ranking"
+msgstr ""
+
+#: includes/class-geoai-admin.php:680
+msgid "Meta descriptions should be 150-160 characters - compelling and actionable"
+msgstr ""
+
+#: includes/class-geoai-admin.php:681
+msgid "Include your brand name (%%sitename%%) for brand recognition"
+msgstr ""
+
+#: includes/class-geoai-admin.php:682
+msgid "Write unique descriptions - avoid duplicates across pages"
+msgstr ""
+
+#: includes/class-geoai-admin.php:683
+msgid "Use action words: \"Learn\", \"Discover\", \"Find out\", \"Get started\""
+msgstr ""
+
+#: includes/class-geoai-admin.php:702
+msgid "OpenGraph & Twitter Cards"
+msgstr ""
+
+#: includes/class-geoai-admin.php:707
+msgid "Social Media Optimization"
+msgstr ""
+
+#: includes/class-geoai-admin.php:708
+msgid "Control how your content appears when shared on Facebook, Twitter, LinkedIn, and other platforms. Good social previews increase click-through rates by up to 40%."
+msgstr ""
+
+#: includes/class-geoai-admin.php:715
+msgid "Default OG Image"
+msgstr ""
+
+#: includes/class-geoai-admin.php:716
+msgid "This image appears when your content is shared on social media. Recommended: 1200x630px, under 8MB, JPG or PNG format."
+msgstr ""
+
+#: includes/class-geoai-admin.php:729
+#: includes/class-geoai-admin.php:734
+#: includes/class-geoai-admin.php:906
+#: blocks/answer-card/edit.js:64
+msgid "Remove"
+msgstr ""
+
+#: includes/class-geoai-admin.php:742
+msgid "Select Image from Library"
+msgstr ""
+
+#: includes/class-geoai-admin.php:747
+msgid "Image Insights"
+msgstr ""
+
+#: includes/class-geoai-admin.php:755
+msgid "Twitter Card Type"
+msgstr ""
+
+#: includes/class-geoai-admin.php:756
+msgid "Summary Large Image shows bigger previews and gets more engagement. Use Summary only if you prefer smaller images."
+msgstr ""
+
+#: includes/class-geoai-admin.php:762
+msgid "Summary"
+msgstr ""
+
+#: includes/class-geoai-admin.php:763
+msgid "Summary Large Image (Recommended)"
+msgstr ""
+
+#: includes/class-geoai-admin.php:769
+msgid "Twitter Site Handle"
+msgstr ""
+
+#: includes/class-geoai-admin.php:770
+msgid "Your Twitter/X username. This appears in Twitter Cards and helps people find your account."
+msgstr ""
+
+#: includes/class-geoai-admin.php:783
+msgid "Best Practices"
+msgstr ""
+
+#: includes/class-geoai-admin.php:785
+msgid "OpenGraph Image: 1200x630px (1.91:1 ratio) for best results"
+msgstr ""
+
+#: includes/class-geoai-admin.php:786
+msgid "File size: Under 8MB, preferably under 1MB for fast loading"
+msgstr ""
+
+#: includes/class-geoai-admin.php:787
+msgid "Format: JPG or PNG (avoid WebP for compatibility)"
+msgstr ""
+
+#: includes/class-geoai-admin.php:788
+msgid "Include text overlay with your brand or key message"
+msgstr ""
+
+#: includes/class-geoai-admin.php:789
+msgid "Test your cards using Facebook Sharing Debugger and Twitter Card Validator"
+msgstr ""
+
+#: includes/class-geoai-admin.php:799
+msgid "Schema.org Defaults"
+msgstr ""
+
+#: includes/class-geoai-admin.php:802
+msgid "Enable Types"
+msgstr ""
+
+#: includes/class-geoai-admin.php:818
+msgid "XML Sitemaps"
+msgstr ""
+
+#: includes/class-geoai-admin.php:821
+msgid "Enable Sitemaps"
+msgstr ""
+
+#: includes/class-geoai-admin.php:822
+msgid "Generate XML sitemaps"
+msgstr ""
+
+#: includes/class-geoai-admin.php:825
+msgid "Include Images"
+msgstr ""
+
+#: includes/class-geoai-admin.php:826
+msgid "Add image URLs to sitemaps"
+msgstr ""
+
+#. translators: %s: The sitemap URL wrapped in <code> tags.
+#: includes/class-geoai-admin.php:830
+#, php-format
+msgid "Sitemap URL: %s"
+msgstr ""
+
+#: includes/class-geoai-admin.php:837
+msgid "AI Crawler Controls"
+msgstr ""
+
+#: includes/class-geoai-admin.php:838
+msgid "These settings generate suggested robots.txt rules. Blocking is not guaranteed as crawlers may not respect these directives."
+msgstr ""
+
+#: includes/class-geoai-admin.php:841
+msgid "Block Crawlers"
+msgstr ""
+
+#: includes/class-geoai-admin.php:871
+msgid "Suggested robots.txt Rules"
+msgstr ""
+
+#: includes/class-geoai-admin.php:873
+msgid "Copy these rules to your robots.txt file. GEO AI does not write server files."
+msgstr ""
+
+#: includes/class-geoai-admin.php:882
+msgid "301/302 Redirects"
+msgstr ""
+
+#: includes/class-geoai-admin.php:886
+msgid "From URL"
+msgstr ""
+
+#: includes/class-geoai-admin.php:887
+msgid "To URL"
+msgstr ""
+
+#: includes/class-geoai-admin.php:888
+msgid "Type"
+msgstr ""
+
+#: includes/class-geoai-admin.php:889
+msgid "Actions"
+msgstr ""
+
+#: includes/class-geoai-admin.php:914
+msgid "Add Redirect"
+msgstr ""
+
+#: includes/class-geoai-admin.php:915
+msgid "Use * as wildcard. Example: /blog/* redirects all /blog/ pages."
+msgstr ""
+
+#: includes/class-geoai-admin.php:919
+msgid "404 Monitor"
+msgstr ""
+
+#: includes/class-geoai-admin.php:922
+msgid "Enable 404 Logging"
+msgstr ""
+
+#: includes/class-geoai-admin.php:926
+msgid "Log 404 errors"
+msgstr ""
+
+#: includes/class-geoai-admin.php:931
+msgid "Retention Period (days)"
+msgstr ""
+
+#: includes/class-geoai-admin.php:934
+msgid "Automatically delete logs older than this many days."
+msgstr ""
+
+#: includes/class-geoai-admin.php:938
+msgid "Max Log Entries"
+msgstr ""
+
+#: includes/class-geoai-admin.php:967
+msgid "Recent 404 Errors"
+msgstr ""
+
+#: includes/class-geoai-admin.php:971
+msgid "URL"
+msgstr ""
+
+#: includes/class-geoai-admin.php:972
+msgid "Referrer"
+msgstr ""
+
+#: includes/class-geoai-admin.php:973
+msgid "IP"
+msgstr ""
+
+#: includes/class-geoai-admin.php:974
+msgid "Date"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1008
+msgid "Bulk SEO Editor"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1011
+msgid "Post Type:"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1025
+msgid "Post"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1026
+#: includes/class-geoai-admin.php:1975
+#: includes/class-geoai-meta.php:173
+msgid "SEO Title"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1027
+#: includes/class-geoai-admin.php:1991
+#: includes/class-geoai-meta.php:179
+msgid "Meta Description"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1049
+msgid "Enter meta description..."
+msgstr ""
+
+#: includes/class-geoai-admin.php:1058
+msgid "No posts found."
+msgstr ""
+
+#: includes/class-geoai-admin.php:1085
+msgid "Save All Changes"
+msgstr ""
+
+#. translators: %d: Number of posts updated
+#: includes/class-geoai-admin.php:1128
+#, php-format
+msgid "%d post updated."
+msgid_plural "%d posts updated."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-geoai-admin.php:1137
+msgid "Import/Export & Tools"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1139
+msgid "Plugin Settings"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1142
+msgid "Export Settings"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1143
+msgid "Download Settings JSON"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1146
+msgid "Import Settings"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1153
+msgid "SEO Meta Data (CSV)"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1156
+msgid "Export Meta Data"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1172
+msgid "Download CSV"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1174
+msgid "Export titles and meta descriptions for all published posts of the selected type."
+msgstr ""
+
+#: includes/class-geoai-admin.php:1178
+msgid "Import Meta Data"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1183
+msgid "Upload CSV"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1185
+msgid "Import CSV with columns: post_id, seo_title, meta_description"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1192
+msgid "Cache & Data"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1195
+msgid "Clear Audit Cache"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1199
+msgid "Clear All Audits"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1200
+msgid "Remove all cached audit data from posts."
+msgstr ""
+
+#: includes/class-geoai-admin.php:1273
+msgid "You do not have permission to perform this action."
+msgstr ""
+
+#: includes/class-geoai-admin.php:1277
+msgid "No file uploaded."
+msgstr ""
+
+#: includes/class-geoai-admin.php:1284
+msgid "Failed to open CSV file."
+msgstr ""
+
+#. translators: 1: Number of posts updated, 2: Number of posts skipped
+#: includes/class-geoai-admin.php:1322
+#, php-format
+msgid "CSV imported. %1$d posts updated, %2$d skipped."
+msgstr ""
+
+#. translators: %d: Number of audit caches cleared
+#: includes/class-geoai-admin.php:1351
+#, php-format
+msgid "%d audit caches cleared."
+msgstr ""
+
+#: includes/class-geoai-admin.php:1482
+msgid "Advanced Settings"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1485
+msgid "Debug Mode"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1486
+msgid "Enable debug logging"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1507
+msgid "SEO Analytics Dashboard"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1509
+msgid "Monitor your site's SEO performance at a glance"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1517
+msgid "SEO Health"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1530
+msgid "Total Posts"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1540
+msgid "With Meta Descriptions"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1553
+msgid "With Focus Keywords"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1566
+msgid "Issues Found"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1574
+msgid "Score Distribution"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1579
+msgid "Content Quality Overview"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1588
+msgid "Top Performers"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1612
+msgid "No posts with high scores yet. Start optimizing!"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1618
+msgid "Needs Attention"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1642
+msgid "Great! No posts need immediate attention."
+msgstr ""
+
+#: includes/class-geoai-admin.php:1648
+msgid "Recent Activity"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1657
+msgid "ago"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1663
+msgid "No recent activity."
+msgstr ""
+
+#: includes/class-geoai-admin.php:1671
+msgid "Issues Requiring Action"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1682
+msgid "Fix Now"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1796
+msgid "GEO AI SEO Analysis"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1858
+msgid "SEO Score"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1865
+#: includes/class-geoai-admin.php:1884
+msgid "Keyword"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1871
+#: includes/class-geoai-admin.php:1888
+msgid "Readability"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1880
+msgid "SEO Meta"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1892
+msgid "Insights"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1896
+msgid "Links"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1960
+#: includes/class-geoai-meta.php:159
+msgid "AI-Powered Generation"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1961
+msgid "Let Google Gemini AI create optimized meta title and description for you."
+msgstr ""
+
+#: includes/class-geoai-admin.php:1966
+#: includes/class-geoai-admin.php:2094
+#: includes/class-geoai-meta.php:166
+#: includes/class-geoai-meta.php:239
+msgid "Generate with AI"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1980
+msgid "Optimal length: 50-60 characters. This appears in search results."
+msgstr ""
+
+#: includes/class-geoai-admin.php:1983
+#: includes/class-geoai-admin.php:1999
+msgid "Preview:"
+msgstr ""
+
+#: includes/class-geoai-admin.php:1996
+msgid "Optimal length: 150-160 characters. Include a call-to-action."
+msgstr ""
+
+#: includes/class-geoai-admin.php:2008
+#: includes/class-geoai-meta.php:184
+msgid "Robots Meta"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2011
+#: includes/class-geoai-meta.php:186
+msgid "Default (index, follow)"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2012
+#: includes/class-geoai-meta.php:187
+msgid "No Index, Follow"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2013
+#: includes/class-geoai-meta.php:188
+msgid "Index, No Follow"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2014
+#: includes/class-geoai-meta.php:189
+msgid "No Index, No Follow"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2017
+msgid "Control how search engines index this page."
+msgstr ""
+
+#: includes/class-geoai-admin.php:2070
+#: includes/class-geoai-meta.php:215
+msgid "Generating..."
+msgstr ""
+
+#: includes/class-geoai-admin.php:2071
+msgid "AI is analyzing your content... This may take 10-15 seconds."
+msgstr ""
+
+#: includes/class-geoai-admin.php:2085
+msgid "Generated successfully! Review and edit as needed."
+msgstr ""
+
+#: includes/class-geoai-admin.php:2087
+#: includes/class-geoai-meta.php:232
+msgid "Error: "
+msgstr ""
+
+#: includes/class-geoai-admin.php:2091
+msgid "Request failed. Please check your API key and try again."
+msgstr ""
+
+#: includes/class-geoai-admin.php:2113
+msgid "Focus Keyword"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2114
+msgid "Enter your focus keyword..."
+msgstr ""
+
+#: includes/class-geoai-admin.php:2117
+msgid "Analyze"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2135
+msgid "Keyword Density"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2137
+msgid "occurrences"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2154
+#: includes/class-geoai-admin.php:2321
+msgid "Analyze Readability"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2172
+msgid "Flesch Reading Ease"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2179
+msgid "Word Count"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2198
+#: includes/class-geoai-admin.php:2550
+msgid "Words"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2202
+#: includes/class-geoai-admin.php:2558
+msgid "Reading Time"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2206
+#: includes/class-geoai-admin.php:2562
+msgid "Vocabulary"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2213
+#: includes/class-geoai-admin.php:2570
+msgid "Recommendations"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2224
+#: includes/class-geoai-admin.php:2583
+msgid "Top Words"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2246
+#: includes/class-geoai-admin.php:2457
+msgid "Internal Links"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2250
+#: includes/class-geoai-admin.php:2461
+msgid "External Links"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2254
+#: includes/class-geoai-admin.php:2465
+msgid "Total Links"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2261
+#: includes/class-geoai-admin.php:2471
+msgid "Suggested Internal Links"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2273
+#: includes/class-geoai-admin.php:2497
+msgid "Copy Link"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2279
+msgid "No internal linking suggestions found."
+msgstr ""
+
+#: includes/class-geoai-admin.php:2298
+#: includes/class-geoai-admin.php:2526
+msgid "Copied!"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2327
+msgid "Readability Score:"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2346
+msgid "Flesch Reading Ease:"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2353
+msgid "Word Count:"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2453
+msgid "Link Statistics"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2472
+msgid "Click to copy the link code to your clipboard:"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2493
+msgid "match"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2505
+msgid "No internal linking suggestions found. Try adding more content or publish more posts."
+msgstr ""
+
+#: includes/class-geoai-admin.php:2546
+msgid "Content Metrics"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2554
+msgid "Sentences"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2597
+msgid "Common Phrases"
+msgstr ""
+
+#: includes/class-geoai-admin.php:2634
+#: includes/class-geoai-admin.php:2659
+msgid "Permission denied."
+msgstr ""
+
+#: includes/class-geoai-admin.php:2639
+msgid "Invalid post ID."
+msgstr ""
+
+#: includes/class-geoai-analyzer.php:57
+#: includes/class-geoai-analyzer.php:272
+#: includes/class-geoai-rest.php:149
+msgid "Post not found."
+msgstr ""
+
+#. translators: %d: HTTP status code from remote API response.
+#: includes/class-geoai-analyzer.php:157
+#: includes/class-geoai-analyzer.php:366
+#: includes/class-geoai-analyzer.php:470
+#, php-format
+msgid "API returned status code %d"
+msgstr ""
+
+#: includes/class-geoai-analyzer.php:164
+#: includes/class-geoai-analyzer.php:373
+msgid "Invalid API response structure."
+msgstr ""
+
+#: includes/class-geoai-analyzer.php:235
+msgid "Add a TL;DR summary within 200 words."
+msgstr ""
+
+#: includes/class-geoai-analyzer.php:241
+msgid "Add an author byline and last updated date."
+msgstr ""
+
+#: includes/class-geoai-analyzer.php:277
+msgid "Google Gemini API key not configured."
+msgstr ""
+
+#: includes/class-geoai-analyzer.php:396
+msgid "Could not extract JSON from API response."
+msgstr ""
+
+#: includes/class-geoai-analyzer.php:404
+msgid "Could not parse API response as JSON."
+msgstr ""
+
+#: includes/class-geoai-analyzer.php:410
+msgid "API response missing required fields."
+msgstr ""
+
+#: includes/class-geoai-analyzer.php:437
+msgid "No API key configured."
+msgstr ""
+
+#: includes/class-geoai-analyzer.php:475
+msgid "API connection successful!"
+msgstr ""
+
+#: includes/class-geoai-breadcrumbs.php:35
+#: includes/class-geoai-breadcrumbs.php:82
+msgid "Home"
+msgstr ""
+
+#: includes/class-geoai-breadcrumbs.php:46
+msgid "Breadcrumb"
+msgstr ""
+
+#: includes/class-geoai-meta.php:139
+msgid "GEO AI SEO"
+msgstr ""
+
+#: includes/class-geoai-meta.php:162
+msgid "Click the button below to automatically generate optimized meta title and description using Google Gemini AI."
+msgstr ""
+
+#: includes/class-geoai-meta.php:175
+msgid "Optimal length: 50-60 characters"
+msgstr ""
+
+#: includes/class-geoai-meta.php:181
+msgid "Optimal length: 150-160 characters"
+msgstr ""
+
+#: includes/class-geoai-meta.php:216
+msgid "This may take 10-15 seconds..."
+msgstr ""
+
+#: includes/class-geoai-meta.php:230
+msgid "Generated successfully!"
+msgstr ""
+
+#: includes/class-geoai-meta.php:236
+msgid "Request failed. Please try again."
+msgstr ""
+
+#: includes/class-geoai-rest.php:128
+msgid "Quick fix applied successfully."
+msgstr ""
+
+#: includes/class-geoai-rest.php:142
+msgid "Invalid fix ID."
+msgstr ""
+
+#: includes/class-geoai-rest.php:154
+msgid "Answer Card already exists in this post."
+msgstr ""
+
+#: includes/class-primary-category.php:57
+msgid "Primary Category"
+msgstr ""
+
+#: includes/class-primary-category.php:80
+msgid "Please assign at least one category to this post first."
+msgstr ""
+
+#: includes/class-primary-category.php:88
+msgid "Select the main category for this post. This will be used in breadcrumbs and permalinks."
+msgstr ""
+
+#: includes/class-primary-category.php:92
+msgid "— Select Primary Category —"
+msgstr ""
+
+#: includes/class-primary-category.php:102
+msgid "Current Primary:"
+msgstr ""
+
+#: includes/class-primary-category.php:113
+msgid "Benefits:"
+msgstr ""
+
+#: includes/class-primary-category.php:114
+msgid "Better URL structure"
+msgstr ""
+
+#: includes/class-primary-category.php:115
+msgid "Clearer breadcrumb navigation"
+msgstr ""
+
+#: includes/class-primary-category.php:116
+msgid "Improved content organization"
+msgstr ""
+
+#: blocks/answer-card/edit.js:29
+#: blocks/answer-card/save.js:11
+msgid "TL;DR"
+msgstr ""
+
+#: blocks/answer-card/edit.js:36
+msgid "Enter a concise summary (max 200 words)..."
+msgstr ""
+
+#: blocks/answer-card/edit.js:44
+#: blocks/answer-card/save.js:22
+msgid "Key Facts"
+msgstr ""
+
+#: blocks/answer-card/edit.js:54
+msgid "Enter key fact..."
+msgstr ""
+
+#: blocks/answer-card/edit.js:70
+msgid "Add Key Fact"
+msgstr ""
+
+#: blocks/answer-card/index.js:10
+msgid "Answer Card"
+msgstr ""
+
+#: blocks/answer-card/index.js:11
+msgid "A concise TL;DR summary with key facts optimized for AI answer engines."
+msgstr ""
+
+#: src/editor.js:32
+msgid "Audit failed"
+msgstr ""
+
+#: src/editor.js:35
+msgid "An error occurred"
+msgstr ""
+
+#: src/editor.js:71
+msgid "GEO AI Audit"
+msgstr ""
+
+#: src/editor.js:80
+msgid "Run AI Audit"
+msgstr ""
+
+#: src/editor.js:111
+msgid "Overall Score"
+msgstr ""
+
+#: src/editor.js:116
+msgid "Score Breakdown:"
+msgstr ""
+
+#: src/editor.js:119
+msgid "Answerability:"
+msgstr ""
+
+#: src/editor.js:123
+msgid "Structure:"
+msgstr ""
+
+#: src/editor.js:127
+msgid "Trust:"
+msgstr ""
+
+#: src/editor.js:131
+msgid "Technical:"
+msgstr ""
+
+#: src/editor.js:139
+msgid "Issues:"
+msgstr ""
+
+#: src/editor.js:188
+msgid "Apply Quick Fix"
+msgstr ""
+
+#: blocks/answer-card/block.json
+msgctxt "block title"
+msgid "Answer Card"
+msgstr ""
+
+#: blocks/answer-card/block.json
+msgctxt "block description"
+msgid "A concise TL;DR summary with key facts optimized for AI answer engines."
+msgstr ""

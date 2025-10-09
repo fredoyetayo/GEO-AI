@@ -52,10 +52,13 @@ class GeoAI_Sitemaps {
         header( 'Content-Type: application/xml; charset=utf-8' );
         
         if ( 'index' === $sitemap ) {
-            echo $this->generate_sitemap_index();
+            $output = $this->generate_sitemap_index();
         } else {
-            echo $this->generate_sitemap( $sitemap );
+            $output = $this->generate_sitemap( $sitemap );
         }
+
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is well-formed XML with values individually escaped via esc_url/esc_xml
+        echo $output;
         
         exit;
     }
