@@ -343,4 +343,4 @@ the Free Software Foundation; either version 2 of the License, or
 
 ---
 
-**Made with ❤️ for the WordPress community**
+**Made with ❤️ by 'Fred Oyetayo for the WordPress community**
