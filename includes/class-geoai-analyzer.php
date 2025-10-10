@@ -31,6 +31,7 @@ class GeoAI_Analyzer {
 
     private function __construct() {
         add_action( 'save_post', array( $this, 'maybe_auto_analyze' ), 20, 2 );
+        add_action( 'geoai_background_audit', array( $this, 'handle_background_audit' ) );
     }
 
     public function maybe_auto_analyze( $post_id, $post ) {
@@ -49,6 +50,29 @@ class GeoAI_Analyzer {
 
         // Queue background audit
         as_enqueue_async_action( 'geoai_background_audit', array( 'post_id' => $post_id ) );
+    }
+
+    /**
+     * Handle the scheduled background audit.
+     *
+     * @param mixed $post_id Post identifier passed from the scheduler.
+     */
+    public function handle_background_audit( $post_id ) {
+        if ( is_array( $post_id ) ) {
+            if ( isset( $post_id['post_id'] ) ) {
+                $post_id = $post_id['post_id'];
+            } else {
+                $post_id = reset( $post_id );
+            }
+        }
+
+        $post_id = absint( $post_id );
+
+        if ( ! $post_id ) {
+            return;
+        }
+
+        $this->analyze_post( $post_id );
     }
 
     public function analyze_post( $post_id ) {
