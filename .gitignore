@@ -4,6 +4,10 @@ vendor/
 
 # Build outputs
 build/
+!build/
+build/*
+!build/editor.js
+!build/editor.asset.php
 dist/
 assets/editor.js
 assets/editor.asset.php
