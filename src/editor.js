@@ -61,6 +61,16 @@ const GeoAISidebar = () => {
         return '#dc3232';
     };
 
+    const hasTitleOptions =
+        auditData?.suggestions?.titleOptions &&
+        auditData.suggestions.titleOptions.length > 0;
+    const hasEntities =
+        auditData?.suggestions?.entities &&
+        auditData.suggestions.entities.length > 0;
+    const hasCitations =
+        auditData?.suggestions?.citations &&
+        auditData.suggestions.citations.length > 0;
+
     return (
         <>
             <PluginSidebarMoreMenuItem target="geoai-sidebar">
@@ -194,6 +204,65 @@ const GeoAISidebar = () => {
                                             </li>
                                         ))}
                                     </ul>
+                                </div>
+                            )}
+
+                            {(hasTitleOptions || hasEntities || hasCitations) && (
+                                <div style={{ marginTop: '16px' }}>
+                                    <strong>{__('AI Suggestions', 'geo-ai')}</strong>
+
+                                    {hasTitleOptions && (
+                                        <div style={{ marginTop: '12px' }}>
+                                            <div style={{ fontWeight: '600', marginBottom: '4px' }}>
+                                                {__('Meta Title Ideas', 'geo-ai')}
+                                            </div>
+                                            <ul style={{ listStyle: 'disc', paddingLeft: '20px', margin: 0 }}>
+                                                {auditData.suggestions.titleOptions.map((title, index) => (
+                                                    <li key={`title-${index}`}>{title}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+
+                                    {hasEntities && (
+                                        <div style={{ marginTop: '12px' }}>
+                                            <div style={{ fontWeight: '600', marginBottom: '4px' }}>
+                                                {__('Relevant Entities', 'geo-ai')}
+                                            </div>
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                                {auditData.suggestions.entities.map((entity, index) => (
+                                                    <span
+                                                        key={`entity-${index}`}
+                                                        style={{
+                                                            background: '#f0f0f0',
+                                                            borderRadius: '12px',
+                                                            padding: '4px 10px',
+                                                            fontSize: '12px',
+                                                        }}
+                                                    >
+                                                        {entity}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {hasCitations && (
+                                        <div style={{ marginTop: '12px' }}>
+                                            <div style={{ fontWeight: '600', marginBottom: '4px' }}>
+                                                {__('Suggested Citations', 'geo-ai')}
+                                            </div>
+                                            <ul style={{ listStyle: 'disc', paddingLeft: '20px', margin: 0 }}>
+                                                {auditData.suggestions.citations.map((citation, index) => (
+                                                    <li key={`citation-${index}`}>
+                                                        <a href={citation} target="_blank" rel="noreferrer">
+                                                            {citation}
+                                                        </a>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>

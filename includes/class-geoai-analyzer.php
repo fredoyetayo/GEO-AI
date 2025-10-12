@@ -84,7 +84,7 @@ class GeoAI_Analyzer {
         // Check for API key
         $api_key = $this->get_api_key();
         if ( empty( $api_key ) ) {
-            return $this->get_mock_audit_data();
+            return new \WP_Error( 'no_api_key', __( 'Google Gemini API key not configured.', 'geo-ai' ) );
         }
 
         // Get rendered content
@@ -94,7 +94,7 @@ class GeoAI_Analyzer {
         $audit_result = $this->call_gemini_api( $content, $api_key );
 
         if ( is_wp_error( $audit_result ) ) {
-            return $this->get_mock_audit_data(); // Fallback to mock data
+            return $audit_result;
         }
 
         // Save to postmeta
@@ -228,60 +228,39 @@ Content to analyze:
         $json_end   = strrpos( $response_text, '}' );
         
         if ( false === $json_start || false === $json_end ) {
-            return $this->get_mock_audit_data();
+            return new \WP_Error( 'parse_error', __( 'Gemini response did not include JSON audit data.', 'geo-ai' ) );
         }
 
         $json = substr( $response_text, $json_start, $json_end - $json_start + 1 );
         $data = json_decode( $json, true );
 
         if ( json_last_error() !== JSON_ERROR_NONE ) {
-            return $this->get_mock_audit_data();
+            return new \WP_Error( 'parse_error', __( 'Gemini response was not valid JSON.', 'geo-ai' ) );
         }
 
-        $data['runAt'] = current_time( 'c' );
-        
-        return $data;
-    }
+        if ( empty( $data['scores'] ) || ! is_array( $data['scores'] ) ) {
+            return new \WP_Error( 'invalid_data', __( 'Gemini response missing score data.', 'geo-ai' ) );
+        }
 
-    private function get_mock_audit_data() {
-        return array(
-            'scores'      => array(
-                'answerability' => 65,
-                'structure'     => 75,
-                'trust'         => 60,
-                'technical'     => 80,
-                'total'         => 70,
-            ),
-            'issues'      => array(
-                array(
-                    'id'       => 'missing_tldr',
-                    'severity' => 'high',
-                    'msg'      => __( 'Add a TL;DR summary within 200 words.', 'geo-ai' ),
-                    'quickFix' => 'insert_answer_card',
-                ),
-                array(
-                    'id'       => 'no_author',
-                    'severity' => 'med',
-                    'msg'      => __( 'Add an author byline and last updated date.', 'geo-ai' ),
-                    'quickFix' => null,
-                ),
-            ),
-            'schema'      => array(
-                'article' => true,
-                'faq'     => false,
-                'howto'   => false,
-                'errors'  => array(),
-            ),
-            'suggestions' => array(
-                'titleOptions' => array(
-                    'Consider more descriptive titles',
-                    'Add question-based headings',
-                ),
-                'entities'     => array( 'WordPress', 'SEO', 'AI' ),
-                'citations'    => array(),
-            ),
-            'runAt'       => current_time( 'c' ),
+        $data['scores'] = array_map( 'intval', $data['scores'] );
+        $data['scores'] = wp_parse_args(
+            $data['scores'],
+            array(
+                'answerability' => 0,
+                'structure'     => 0,
+                'trust'         => 0,
+                'technical'     => 0,
+                'total'         => 0,
+            )
         );
+
+        $data['issues']      = isset( $data['issues'] ) && is_array( $data['issues'] ) ? $data['issues'] : array();
+        $data['schema']      = isset( $data['schema'] ) && is_array( $data['schema'] ) ? $data['schema'] : array();
+        $data['suggestions'] = isset( $data['suggestions'] ) && is_array( $data['suggestions'] ) ? $data['suggestions'] : array();
+
+        $data['runAt'] = current_time( 'c' );
+
+        return $data;
     }
 
     /**
