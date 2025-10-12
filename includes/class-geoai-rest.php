@@ -48,6 +48,23 @@ class GeoAI_REST {
 
         register_rest_route(
             'geoai/v1',
+            '/audit/(?P<post_id>\\d+)',
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( $this, 'get_audit' ),
+                'permission_callback' => array( $this, 'check_audit_permission' ),
+                'args'                => array(
+                    'post_id' => array(
+                        'required'          => true,
+                        'type'              => 'integer',
+                        'sanitize_callback' => 'absint',
+                    ),
+                ),
+            )
+        );
+
+        register_rest_route(
+            'geoai/v1',
             '/quick-fix',
             array(
                 'methods'             => 'POST',
@@ -93,6 +110,33 @@ class GeoAI_REST {
                     'message' => $result->get_error_message(),
                 ),
                 500
+            );
+        }
+
+        return new \WP_REST_Response(
+            array(
+                'success' => true,
+                'data'    => $result,
+            ),
+            200
+        );
+    }
+
+    public function get_audit( $request ) {
+        $post_id = $request->get_param( 'post_id' );
+
+        $analyzer = \GeoAI\Core\GeoAI_Analyzer::get_instance();
+        $result   = $analyzer->get_latest_audit( $post_id );
+
+        if ( is_wp_error( $result ) ) {
+            $status = 'not_found' === $result->get_error_code() ? 404 : 500;
+
+            return new \WP_REST_Response(
+                array(
+                    'success' => false,
+                    'message' => $result->get_error_message(),
+                ),
+                $status
             );
         }
 

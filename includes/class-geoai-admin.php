@@ -261,14 +261,26 @@ class GeoAI_Admin {
     }
 
     public function enqueue_editor_assets() {
-        $asset_file = GEOAI_PLUGIN_DIR . 'build/editor.asset.php';
-        
-        if ( file_exists( $asset_file ) ) {
-            $asset = include $asset_file;
-            
+        $asset_path  = 'build/editor.asset.php';
+        $script_path = 'build/editor.js';
+
+        if ( ! file_exists( GEOAI_PLUGIN_DIR . $asset_path ) ) {
+            // Support builds produced by default wp-scripts naming (index.js).
+            $fallback_asset = 'build/index.asset.php';
+            $fallback_js    = 'build/index.js';
+
+            if ( file_exists( GEOAI_PLUGIN_DIR . $fallback_asset ) ) {
+                $asset_path  = $fallback_asset;
+                $script_path = $fallback_js;
+            }
+        }
+
+        if ( file_exists( GEOAI_PLUGIN_DIR . $asset_path ) ) {
+            $asset = include GEOAI_PLUGIN_DIR . $asset_path;
+
             wp_enqueue_script(
                 'geoai-editor',
-                GEOAI_PLUGIN_URL . 'build/editor.js',
+                GEOAI_PLUGIN_URL . $script_path,
                 $asset['dependencies'],
                 $asset['version'],
                 true
@@ -277,7 +289,7 @@ class GeoAI_Admin {
             // Fallback if build file doesn't exist
             wp_enqueue_script(
                 'geoai-editor',
-                GEOAI_PLUGIN_URL . 'build/editor.js',
+                GEOAI_PLUGIN_URL . $script_path,
                 array( 'wp-blocks', 'wp-element', 'wp-editor', 'wp-components', 'wp-data', 'wp-plugins', 'wp-edit-post', 'wp-api-fetch' ),
                 GEOAI_VERSION,
                 true

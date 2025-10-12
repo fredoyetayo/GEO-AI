@@ -84,7 +84,7 @@ class GeoAI_Analyzer {
         // Check for API key
         $api_key = $this->get_api_key();
         if ( empty( $api_key ) ) {
-            return $this->get_mock_audit_data();
+            return new \WP_Error( 'no_api_key', __( 'Google Gemini API key not configured.', 'geo-ai' ) );
         }
 
         // Get rendered content
@@ -94,7 +94,7 @@ class GeoAI_Analyzer {
         $audit_result = $this->call_gemini_api( $content, $api_key );
 
         if ( is_wp_error( $audit_result ) ) {
-            return $this->get_mock_audit_data(); // Fallback to mock data
+            return $audit_result;
         }
 
         // Save to postmeta
@@ -228,60 +228,173 @@ Content to analyze:
         $json_end   = strrpos( $response_text, '}' );
         
         if ( false === $json_start || false === $json_end ) {
-            return $this->get_mock_audit_data();
+            return new \WP_Error( 'parse_error', __( 'Gemini response did not include JSON audit data.', 'geo-ai' ) );
         }
 
         $json = substr( $response_text, $json_start, $json_end - $json_start + 1 );
         $data = json_decode( $json, true );
 
         if ( json_last_error() !== JSON_ERROR_NONE ) {
-            return $this->get_mock_audit_data();
+            return new \WP_Error( 'parse_error', __( 'Gemini response was not valid JSON.', 'geo-ai' ) );
         }
 
+        if ( empty( $data['scores'] ) || ! is_array( $data['scores'] ) ) {
+            return new \WP_Error( 'invalid_data', __( 'Gemini response missing score data.', 'geo-ai' ) );
+        }
+
+        $data['scores']      = $this->sanitize_scores( $data['scores'] );
+        $data['issues']      = $this->sanitize_issues( $data['issues'] ?? array() );
+        $data['schema']      = $this->sanitize_schema( $data['schema'] ?? array() );
+        $data['suggestions'] = $this->sanitize_suggestions( $data['suggestions'] ?? array() );
+
         $data['runAt'] = current_time( 'c' );
-        
+
         return $data;
     }
 
-    private function get_mock_audit_data() {
-        return array(
-            'scores'      => array(
-                'answerability' => 65,
-                'structure'     => 75,
-                'trust'         => 60,
-                'technical'     => 80,
-                'total'         => 70,
-            ),
-            'issues'      => array(
-                array(
-                    'id'       => 'missing_tldr',
-                    'severity' => 'high',
-                    'msg'      => __( 'Add a TL;DR summary within 200 words.', 'geo-ai' ),
-                    'quickFix' => 'insert_answer_card',
-                ),
-                array(
-                    'id'       => 'no_author',
-                    'severity' => 'med',
-                    'msg'      => __( 'Add an author byline and last updated date.', 'geo-ai' ),
-                    'quickFix' => null,
-                ),
-            ),
-            'schema'      => array(
-                'article' => true,
+    private function sanitize_scores( $scores ) {
+        if ( ! is_array( $scores ) ) {
+            $scores = array();
+        }
+
+        $scores = wp_parse_args(
+            array_map( 'intval', $scores ),
+            array(
+                'answerability' => 0,
+                'structure'     => 0,
+                'trust'         => 0,
+                'technical'     => 0,
+                'total'         => 0,
+            )
+        );
+
+        foreach ( $scores as $key => $value ) {
+            $scores[ $key ] = max( 0, min( 100, (int) $value ) );
+        }
+
+        return $scores;
+    }
+
+    private function sanitize_issues( $issues ) {
+        if ( ! is_array( $issues ) ) {
+            return array();
+        }
+
+        $sanitized = array();
+
+        foreach ( $issues as $issue ) {
+            if ( ! is_array( $issue ) ) {
+                continue;
+            }
+
+            $severity = isset( $issue['severity'] ) ? strtolower( sanitize_text_field( $issue['severity'] ) ) : '';
+            if ( ! in_array( $severity, array( 'high', 'med', 'low' ), true ) ) {
+                $severity = 'low';
+            }
+
+            $sanitized[] = array(
+                'id'       => isset( $issue['id'] ) ? sanitize_key( $issue['id'] ) : '',
+                'severity' => $severity,
+                'msg'      => isset( $issue['msg'] ) ? wp_kses_post( $issue['msg'] ) : '',
+                'quickFix' => isset( $issue['quickFix'] ) && '' !== $issue['quickFix'] ? sanitize_key( $issue['quickFix'] ) : null,
+            );
+        }
+
+        return $sanitized;
+    }
+
+    private function sanitize_schema( $schema ) {
+        if ( ! is_array( $schema ) ) {
+            $schema = array();
+        }
+
+        $schema = wp_parse_args(
+            $schema,
+            array(
+                'article' => false,
                 'faq'     => false,
                 'howto'   => false,
                 'errors'  => array(),
-            ),
-            'suggestions' => array(
-                'titleOptions' => array(
-                    'Consider more descriptive titles',
-                    'Add question-based headings',
-                ),
-                'entities'     => array( 'WordPress', 'SEO', 'AI' ),
-                'citations'    => array(),
-            ),
-            'runAt'       => current_time( 'c' ),
+            )
         );
+
+        $schema['article'] = (bool) $schema['article'];
+        $schema['faq']     = (bool) $schema['faq'];
+        $schema['howto']   = (bool) $schema['howto'];
+
+        if ( ! is_array( $schema['errors'] ) ) {
+            $schema['errors'] = array();
+        }
+
+        $schema['errors'] = array_values( array_filter( array_map( 'sanitize_text_field', $schema['errors'] ) ) );
+
+        return $schema;
+    }
+
+    private function sanitize_suggestions( $suggestions ) {
+        $defaults = array(
+            'titleOptions' => array(),
+            'entities'     => array(),
+            'citations'    => array(),
+        );
+
+        if ( ! is_array( $suggestions ) ) {
+            return $defaults;
+        }
+
+        $sanitized = $defaults;
+
+        if ( isset( $suggestions['titleOptions'] ) && is_array( $suggestions['titleOptions'] ) ) {
+            $sanitized['titleOptions'] = array_values(
+                array_filter( array_map( 'sanitize_text_field', $suggestions['titleOptions'] ) )
+            );
+        }
+
+        if ( isset( $suggestions['entities'] ) && is_array( $suggestions['entities'] ) ) {
+            $sanitized['entities'] = array_values(
+                array_filter( array_map( 'sanitize_text_field', $suggestions['entities'] ) )
+            );
+        }
+
+        if ( isset( $suggestions['citations'] ) && is_array( $suggestions['citations'] ) ) {
+            $sanitized['citations'] = array_values(
+                array_filter( array_map( 'esc_url_raw', $suggestions['citations'] ) )
+            );
+        }
+
+        return $sanitized;
+    }
+
+    public function get_latest_audit( $post_id ) {
+        $post_id = absint( $post_id );
+
+        if ( ! $post_id ) {
+            return new \WP_Error( 'invalid_post', __( 'Invalid post ID.', 'geo-ai' ) );
+        }
+
+        $stored = get_post_meta( $post_id, '_geoai_audit', true );
+
+        if ( empty( $stored ) ) {
+            return new \WP_Error( 'not_found', __( 'No audit results found for this post.', 'geo-ai' ) );
+        }
+
+        $data = json_decode( $stored, true );
+
+        if ( json_last_error() !== JSON_ERROR_NONE || ! is_array( $data ) ) {
+            return new \WP_Error( 'invalid_data', __( 'Stored audit data is corrupted.', 'geo-ai' ) );
+        }
+
+        $data['scores']      = $this->sanitize_scores( $data['scores'] ?? array() );
+        $data['issues']      = $this->sanitize_issues( $data['issues'] ?? array() );
+        $data['schema']      = $this->sanitize_schema( $data['schema'] ?? array() );
+        $data['suggestions'] = $this->sanitize_suggestions( $data['suggestions'] ?? array() );
+
+        $timestamp = get_post_meta( $post_id, '_geoai_audit_timestamp', true );
+        if ( $timestamp ) {
+            $data['runAt'] = mysql2date( 'c', $timestamp );
+        }
+
+        return $data;
     }
 
     /**
