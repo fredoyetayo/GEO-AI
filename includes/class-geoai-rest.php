@@ -26,6 +26,7 @@ class GeoAI_REST {
 
     private function __construct() {
         add_action( 'rest_api_init', array( $this, 'register_routes' ) );
+        add_action( 'init', array( $this, 'register_meta' ) );
     }
 
     public function register_routes() {
@@ -122,13 +123,16 @@ class GeoAI_REST {
             );
         }
 
-        return new \WP_REST_Response(
-            array(
-                'success' => true,
-                'message' => __( 'Quick fix applied successfully.', 'geo-ai' ),
-            ),
-            200
+        $response = array(
+            'success' => true,
+            'message' => __( 'Quick fix applied successfully.', 'geo-ai' ),
         );
+
+        if ( is_array( $result ) ) {
+            $response['data'] = $result;
+        }
+
+        return new \WP_REST_Response( $response, 200 );
     }
 
     private function apply_fix( $post_id, $fix_id ) {
@@ -137,7 +141,7 @@ class GeoAI_REST {
                 return $this->insert_answer_card_block( $post_id );
             case 'add_author':
                 // Future: Add author byline
-                return true;
+                return array();
             default:
                 return new \WP_Error( 'invalid_fix', __( 'Invalid fix ID.', 'geo-ai' ) );
         }
@@ -158,13 +162,38 @@ class GeoAI_REST {
         $answer_card_block = '<!-- wp:geoai/answer-card {"tldr":"","keyFacts":[]} /-->';
         $updated_content   = $answer_card_block . "\n\n" . $post->post_content;
 
-        wp_update_post(
+        $update_result = wp_update_post(
             array(
                 'ID'           => $post_id,
                 'post_content' => $updated_content,
-            )
+            ),
+            true
         );
 
-        return true;
+        if ( is_wp_error( $update_result ) ) {
+            return $update_result;
+        }
+
+        $updated_post = get_post( $post_id );
+
+        return array(
+            'content' => $updated_post ? $updated_post->post_content : $updated_content,
+            'notice'  => __( 'Answer Card inserted at the top of the post.', 'geo-ai' ),
+        );
+    }
+
+    public function register_meta() {
+        register_post_meta(
+            '',
+            '_geoai_audit_timestamp',
+            array(
+                'show_in_rest'  => true,
+                'single'        => true,
+                'type'          => 'string',
+                'auth_callback' => function () {
+                    return current_user_can( 'edit_posts' );
+                },
+            )
+        );
     }
 }
