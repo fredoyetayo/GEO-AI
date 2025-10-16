@@ -64,17 +64,6 @@ class GeoAI_Plugin {
      * Load required files.
      */
     private function load_dependencies() {
-        // Load Action Scheduler or provide a fallback when the library is missing.
-        if ( ! class_exists( '\\ActionScheduler' ) && ! function_exists( 'as_enqueue_async_action' ) ) {
-            $action_scheduler_bootstrap = GEOAI_PLUGIN_DIR . 'vendor/action-scheduler/action-scheduler.php';
-
-            if ( file_exists( $action_scheduler_bootstrap ) ) {
-                require_once $action_scheduler_bootstrap;
-            } else {
-                require_once GEOAI_PLUGIN_DIR . 'includes/functions-action-scheduler-fallback.php';
-            }
-        }
-
         // Load traits.
         require_once GEOAI_PLUGIN_DIR . 'includes/traits/trait-encryption.php';
 
@@ -204,8 +193,10 @@ class GeoAI_Plugin {
      * Plugin deactivation.
      */
     public function deactivate() {
-        // Clear scheduled actions.
-        as_unschedule_all_actions( 'geoai_audit_batch' );
+        // Clear scheduled actions if Action Scheduler is available.
+        if ( function_exists( 'as_unschedule_all_actions' ) ) {
+            as_unschedule_all_actions( 'geoai_audit_batch' );
+        }
 
         // Flush rewrite rules.
         flush_rewrite_rules();

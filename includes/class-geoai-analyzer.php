@@ -48,8 +48,10 @@ class GeoAI_Analyzer {
             return;
         }
 
-        // Queue background audit
-        as_enqueue_async_action( 'geoai_background_audit', array( 'post_id' => $post_id ) );
+        // Queue background audit if Action Scheduler is available
+        if ( function_exists( 'as_enqueue_async_action' ) ) {
+            as_enqueue_async_action( 'geoai_background_audit', array( 'post_id' => $post_id ) );
+        }
     }
 
     /**
