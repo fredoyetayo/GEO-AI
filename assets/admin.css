@@ -25,6 +25,403 @@
     padding: 15px 10px;
 }
 
+/* Unified SEO Meta Box */
+.geoai-unified-seo {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+    margin: -12px -12px 0;
+}
+
+.geoai-seo-header {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.geoai-score-circle {
+    flex-shrink: 0;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+.geoai-score-circle::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    padding: 4px;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+}
+
+.geoai-score-circle .score-value {
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1;
+    color: #667eea;
+}
+
+.geoai-score-circle .score-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #666;
+    margin-top: 4px;
+}
+
+.geoai-score-breakdown {
+    flex: 1;
+    display: flex;
+    gap: 16px;
+}
+
+.geoai-score-breakdown .score-item {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(8px);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.2s;
+}
+
+.geoai-score-breakdown .score-item:hover {
+    transform: translateY(-2px);
+}
+
+.geoai-score-breakdown .score-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    background: white;
+    font-size: 20px;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.geoai-score-breakdown .score-badge.score-good {
+    color: #10b981;
+}
+
+.geoai-score-breakdown .score-badge.score-ok {
+    color: #f59e0b;
+}
+
+.geoai-score-breakdown .score-badge.score-warning {
+    color: #f59e0b;
+}
+
+.geoai-score-breakdown .score-badge.score-poor {
+    color: #ef4444;
+}
+
+.geoai-score-breakdown .score-name {
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.geoai-tab-nav {
+    background: white;
+    display: flex;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.geoai-tab-btn {
+    flex: 1;
+    padding: 16px 12px;
+    border: none;
+    background: transparent;
+    color: #6b7280;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.geoai-tab-btn:hover {
+    background: #f9fafb;
+    color: #667eea;
+}
+
+.geoai-tab-btn.active {
+    color: #667eea;
+    background: linear-gradient(to bottom, #f0f4ff 0%, white 100%);
+}
+
+.geoai-tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+.geoai-tab-btn .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.geoai-tab-content {
+    background: white;
+    padding: 0;
+}
+
+.geoai-tab-pane {
+    display: none;
+    padding: 24px;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.geoai-tab-pane.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.geoai-ai-banner {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 2px solid #fbbf24;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 4px 16px rgba(251, 191, 36, 0.2);
+}
+
+.geoai-ai-banner .ai-banner-icon {
+    flex-shrink: 0;
+    width: 50px;
+    height: 50px;
+    background: white;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.geoai-ai-banner .ai-banner-icon .dashicons {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+    color: #fbbf24;
+}
+
+.geoai-ai-banner .ai-banner-content {
+    flex: 1;
+}
+
+.geoai-ai-banner h4 {
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #92400e;
+}
+
+.geoai-ai-banner p {
+    margin: 0;
+    font-size: 13px;
+    color: #92400e;
+    line-height: 1.5;
+}
+
+.geoai-ai-banner .ai-banner-action {
+    display: flex;
+    align-items: center;
+}
+
+.geoai-field-group {
+    margin-bottom: 24px;
+}
+
+.geoai-field-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.geoai-field-label strong {
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.geoai-field-label .char-counter {
+    font-size: 12px;
+    font-weight: 600;
+    color: #f59e0b;
+    padding: 2px 8px;
+    background: #fef3c7;
+    border-radius: 4px;
+}
+
+.geoai-input-large {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.geoai-input-large:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.geoai-textarea-large {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    resize: vertical;
+    transition: all 0.2s;
+}
+
+.geoai-textarea-large:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.geoai-select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.geoai-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.geoai-field-description {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+.geoai-preview-box {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 12px;
+}
+
+.geoai-preview-box .preview-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #6b7280;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.geoai-preview-box .preview-title {
+    font-size: 18px;
+    color: #1a0dab;
+    margin-bottom: 6px;
+    line-height: 1.3;
+    font-weight: normal;
+}
+
+.geoai-preview-box .preview-url {
+    font-size: 13px;
+    color: #5f6368;
+    margin-bottom: 8px;
+    word-break: break-all;
+}
+
+.geoai-preview-box .preview-description {
+    font-size: 13px;
+    color: #4d5156;
+    line-height: 1.58;
+}
+
+.geoai-status-message {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.geoai-status-message.success {
+    background: #d1fae5;
+    border: 1px solid #10b981;
+    color: #065f46;
+}
+
+.geoai-status-message.error {
+    background: #fee2e2;
+    border: 1px solid #ef4444;
+    color: #991b1b;
+}
+
+.geoai-status-message.info {
+    background: #dbeafe;
+    border: 1px solid #3b82f6;
+    color: #1e40af;
+}
+
+.geoai-status-message .dashicons {
+    flex-shrink: 0;
+}
+
 .geoai-meta-box label {
     font-weight: 600;
     margin-bottom: 8px;

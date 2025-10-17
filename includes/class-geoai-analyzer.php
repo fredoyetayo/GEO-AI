@@ -120,9 +120,10 @@ class GeoAI_Analyzer {
 
     private function get_api_key() {
         $api_key = get_option( 'geoai_api_key', '' );
-        
-        // Simple retrieval - stored as plain text
-        // TODO: Add decryption once core functionality is verified
+        // Handle legacy plain prefix and trim
+        if ( 0 === strpos( $api_key, 'plain:' ) ) {
+            $api_key = substr( $api_key, 6 );
+        }
         return trim( $api_key );
     }
 
@@ -567,8 +568,8 @@ Return the JSON now:',
      *
      * @return array|WP_Error Success message or error
      */
-    public function test_api_connection() {
-        $api_key = $this->get_api_key();
+    public function test_api_connection( $override_key = null ) {
+        $api_key = $override_key ? trim( (string) $override_key ) : $this->get_api_key();
         if ( empty( $api_key ) ) {
             return new \WP_Error( 'no_api_key', __( 'No API key configured.', 'geo-ai' ) );
         }

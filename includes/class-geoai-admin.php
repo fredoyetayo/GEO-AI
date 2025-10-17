@@ -187,15 +187,20 @@ class GeoAI_Admin {
     }
 
     public function enqueue_admin_assets( $hook ) {
-        if ( 'toplevel_page_geoai-settings' !== $hook && 'geo-ai_page_geoai-dashboard' !== $hook ) {
+        // Load assets on settings, dashboard, and post editor screens so the meta box is styled
+        $allowed_hooks = array( 'toplevel_page_geoai-settings', 'geo-ai_page_geoai-dashboard', 'post.php', 'post-new.php' );
+        if ( ! in_array( $hook, $allowed_hooks, true ) ) {
             return;
         }
+
+        $admin_css_path = GEOAI_PLUGIN_DIR . 'assets/admin.css';
+        $admin_css_ver  = file_exists( $admin_css_path ) ? filemtime( $admin_css_path ) : GEOAI_VERSION;
 
         wp_enqueue_style(
             'geoai-admin',
             GEOAI_PLUGIN_URL . 'assets/admin.css',
             array(),
-            GEOAI_VERSION
+            $admin_css_ver
         );
 
         // Enqueue Chart.js for dashboard
@@ -251,11 +256,14 @@ class GeoAI_Admin {
             );
         }
 
+        $editor_css_path = GEOAI_PLUGIN_DIR . 'assets/editor.css';
+        $editor_css_ver  = file_exists( $editor_css_path ) ? filemtime( $editor_css_path ) : GEOAI_VERSION;
+
         wp_enqueue_style(
             'geoai-editor',
             GEOAI_PLUGIN_URL . 'assets/editor.css',
             array( 'wp-edit-blocks' ),
-            GEOAI_VERSION
+            $editor_css_ver
         );
 
         wp_localize_script(
@@ -417,7 +425,8 @@ class GeoAI_Admin {
                         type: 'POST',
                         data: {
                             action: 'geoai_test_api',
-                            nonce: geoaiAdmin.nonce
+                            nonce: geoaiAdmin.nonce,
+                            api_key: $('#geoai_api_key').val()
                         },
                         success: function(response) {
                             if (response.success) {
@@ -2608,11 +2617,19 @@ class GeoAI_Admin {
             wp_send_json_error( array( 'message' => __( 'Permission denied.', 'geo-ai' ) ) );
         }
 
+        $posted_key = isset( $_POST['api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['api_key'] ) ) : '';
+
         $analyzer = \GeoAI\Core\GeoAI_Analyzer::get_instance();
-        $result = $analyzer->test_api_connection();
+        // If a key was provided from the form, use it for this test; otherwise fall back to stored option
+        $result = $analyzer->test_api_connection( $posted_key ?: null );
 
         if ( is_wp_error( $result ) ) {
             wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+        }
+
+        // Persist the provided key after a successful test so users don't have to press Save
+        if ( ! empty( $posted_key ) ) {
+            update_option( 'geoai_api_key', $posted_key, false );
         }
 
         wp_send_json_success( $result );
