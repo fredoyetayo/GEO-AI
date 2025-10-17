@@ -20,7 +20,7 @@ class GeoAI_Analyzer {
     use Encryption;
 
     private static $instance = null;
-    private $api_endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+    private $api_endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
 
     public static function get_instance() {
         if ( null === self::$instance ) {
