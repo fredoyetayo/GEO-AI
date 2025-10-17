@@ -51,6 +51,14 @@ class GeoAI_Analyzer {
         // Queue background audit if Action Scheduler is available
         if ( function_exists( 'as_enqueue_async_action' ) ) {
             as_enqueue_async_action( 'geoai_background_audit', array( 'post_id' => $post_id ) );
+            return;
+        }
+
+        // If Action Scheduler is not available, fall back to running immediately.
+        $result = $this->analyze_post( $post_id );
+
+        if ( is_wp_error( $result ) ) {
+            error_log( 'GEO AI: Auto audit failed - ' . $result->get_error_message() );
         }
     }
 
@@ -74,7 +82,11 @@ class GeoAI_Analyzer {
             return;
         }
 
-        $this->analyze_post( $post_id );
+        $result = $this->analyze_post( $post_id );
+
+        if ( is_wp_error( $result ) ) {
+            error_log( 'GEO AI: Background audit failed - ' . $result->get_error_message() );
+        }
     }
 
     public function analyze_post( $post_id ) {
@@ -114,10 +126,19 @@ class GeoAI_Analyzer {
         return trim( $api_key );
     }
 
-    private function get_rendered_content( $post ) {
+    private function get_rendered_content( $post_obj ) {
+        global $post;
+
+        $original_post = $post instanceof \WP_Post ? $post : null;
+
+        $post = $post_obj;
         setup_postdata( $post );
         $content = apply_filters( 'the_content', $post->post_content );
         wp_reset_postdata();
+
+        if ( $original_post instanceof \WP_Post ) {
+            $post = $original_post;
+        }
 
         // Strip HTML and limit length
         $text = wp_strip_all_tags( $content );
@@ -138,6 +159,13 @@ class GeoAI_Analyzer {
                 ),
                 'body'    => wp_json_encode(
                     array(
+                        'systemInstruction' => array(
+                            'parts' => array(
+                                array(
+                                    'text' => 'You are GEO AI, a WordPress SEO assistant. Only respond with valid JSON that matches the requested schema.'
+                                ),
+                            ),
+                        ),
                         'contents' => array(
                             array(
                                 'parts' => array(
@@ -150,6 +178,7 @@ class GeoAI_Analyzer {
                             'topK'            => 40,
                             'topP'            => 0.95,
                             'maxOutputTokens' => 2048,
+                            'responseMimeType' => 'application/json',
                         ),
                         'safetySettings' => array(
                             array(
@@ -186,15 +215,21 @@ class GeoAI_Analyzer {
             return new \WP_Error( 'api_error', sprintf( __( 'API returned status code %d', 'geo-ai' ), $status_code ) );
         }
 
-        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+        $raw_body = wp_remote_retrieve_body( $response );
+        $body     = json_decode( $raw_body, true );
 
-        if ( empty( $body['candidates'][0]['content']['parts'][0]['text'] ) ) {
-            error_log( 'GEO AI: Invalid API response - ' . wp_remote_retrieve_body( $response ) );
+        $result_text = '';
+
+        if ( isset( $body['candidates'][0]['content']['parts'][0]['text'] ) ) {
+            $result_text = $body['candidates'][0]['content']['parts'][0]['text'];
+        } elseif ( isset( $body['text'] ) ) {
+            // Newer Gemini responses can use responseMimeType to return direct JSON.
+            $result_text = is_string( $body['text'] ) ? $body['text'] : wp_json_encode( $body['text'] );
+        } else {
+            error_log( 'GEO AI: Invalid API response - ' . $raw_body );
             return new \WP_Error( 'api_error', __( 'Invalid API response structure.', 'geo-ai' ) );
         }
 
-        $result_text = $body['candidates'][0]['content']['parts'][0]['text'];
-        
         return $this->parse_gemini_response( $result_text );
     }
 
@@ -228,19 +263,31 @@ Content to analyze:
     }
 
     private function parse_gemini_response( $response_text ) {
-        // Extract JSON from response
-        $json_start = strpos( $response_text, '{' );
-        $json_end   = strrpos( $response_text, '}' );
-        
-        if ( false === $json_start || false === $json_end ) {
-            return new \WP_Error( 'parse_error', __( 'Gemini response did not include JSON audit data.', 'geo-ai' ) );
+        $response_text = preg_replace( '/```json\s*/i', '', $response_text );
+        $response_text = preg_replace( '/```\s*$/', '', $response_text );
+        $response_text = trim( $response_text );
+
+        if ( '' === $response_text ) {
+            return new \WP_Error( 'parse_error', __( 'Gemini response did not include audit data.', 'geo-ai' ) );
         }
 
-        $json = substr( $response_text, $json_start, $json_end - $json_start + 1 );
-        $data = json_decode( $json, true );
+        // Attempt direct decode first for responses that respect responseMimeType.
+        $data = json_decode( $response_text, true );
 
-        if ( json_last_error() !== JSON_ERROR_NONE ) {
-            return new \WP_Error( 'parse_error', __( 'Gemini response was not valid JSON.', 'geo-ai' ) );
+        if ( json_last_error() !== JSON_ERROR_NONE || ! is_array( $data ) ) {
+            $json_start = strpos( $response_text, '{' );
+            $json_end   = strrpos( $response_text, '}' );
+
+            if ( false === $json_start || false === $json_end ) {
+                return new \WP_Error( 'parse_error', __( 'Gemini response did not include JSON audit data.', 'geo-ai' ) );
+            }
+
+            $json = substr( $response_text, $json_start, $json_end - $json_start + 1 );
+            $data = json_decode( $json, true );
+
+            if ( json_last_error() !== JSON_ERROR_NONE ) {
+                return new \WP_Error( 'parse_error', __( 'Gemini response was not valid JSON.', 'geo-ai' ) );
+            }
         }
 
         if ( empty( $data['scores'] ) || ! is_array( $data['scores'] ) ) {
@@ -259,13 +306,73 @@ Content to analyze:
             )
         );
 
-        $data['issues']      = isset( $data['issues'] ) && is_array( $data['issues'] ) ? $data['issues'] : array();
-        $data['schema']      = isset( $data['schema'] ) && is_array( $data['schema'] ) ? $data['schema'] : array();
+        $data['issues'] = isset( $data['issues'] ) && is_array( $data['issues'] )
+            ? array_values( array_map( array( $this, 'normalize_issue' ), $data['issues'] ) )
+            : array();
+
+        $data['schema'] = isset( $data['schema'] ) && is_array( $data['schema'] ) ? $data['schema'] : array();
+        $data['schema'] = wp_parse_args(
+            $data['schema'],
+            array(
+                'article' => false,
+                'faq'     => false,
+                'howto'   => false,
+                'errors'  => array(),
+            )
+        );
+
+        if ( ! is_array( $data['schema']['errors'] ) ) {
+            $data['schema']['errors'] = array();
+        }
+
         $data['suggestions'] = isset( $data['suggestions'] ) && is_array( $data['suggestions'] ) ? $data['suggestions'] : array();
+        $data['suggestions'] = wp_parse_args(
+            $data['suggestions'],
+            array(
+                'titleOptions' => array(),
+                'entities'     => array(),
+                'citations'    => array(),
+            )
+        );
+
+        foreach ( array( 'titleOptions', 'entities', 'citations' ) as $key ) {
+            if ( ! is_array( $data['suggestions'][ $key ] ) ) {
+                $data['suggestions'][ $key ] = array();
+            }
+        }
 
         $data['runAt'] = current_time( 'c' );
 
         return $data;
+    }
+
+    /**
+     * Normalize issue data coming from the AI response.
+     *
+     * @param mixed $issue Raw issue payload.
+     * @return array
+     */
+    private function normalize_issue( $issue ) {
+        if ( ! is_array( $issue ) ) {
+            $issue = array( 'msg' => (string) $issue );
+        }
+
+        $issue = wp_parse_args(
+            $issue,
+            array(
+                'id'       => wp_unique_id( 'issue_' ),
+                'severity' => 'med',
+                'msg'      => '',
+                'quickFix' => null,
+            )
+        );
+
+        $issue['id']       = sanitize_key( $issue['id'] );
+        $issue['severity'] = in_array( $issue['severity'], array( 'high', 'med', 'low' ), true ) ? $issue['severity'] : 'med';
+        $issue['msg']      = wp_strip_all_tags( (string) $issue['msg'] );
+        $issue['quickFix'] = $issue['quickFix'] ? sanitize_key( $issue['quickFix'] ) : null;
+
+        return $issue;
     }
 
     /**
@@ -343,6 +450,13 @@ Return the JSON now:',
                 ),
                 'body'    => wp_json_encode(
                     array(
+                        'systemInstruction' => array(
+                            'parts' => array(
+                                array(
+                                    'text' => 'You are GEO AI, an SEO assistant. Only respond with valid JSON that matches the requested schema.'
+                                ),
+                            ),
+                        ),
                         'contents' => array(
                             array(
                                 'parts' => array(
@@ -355,6 +469,7 @@ Return the JSON now:',
                             'topK'            => 40,
                             'topP'            => 0.95,
                             'maxOutputTokens' => 512,
+                            'responseMimeType' => 'application/json',
                         ),
                     )
                 ),
@@ -374,15 +489,20 @@ Return the JSON now:',
             return new \WP_Error( 'api_error', sprintf( __( 'API returned status code %d', 'geo-ai' ), $status_code ) );
         }
 
-        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+        $raw_body = wp_remote_retrieve_body( $response );
+        $body     = json_decode( $raw_body, true );
 
-        if ( empty( $body['candidates'][0]['content']['parts'][0]['text'] ) ) {
-            error_log( 'GEO AI Meta Generation: Invalid response structure' );
+        $result_text = '';
+
+        if ( isset( $body['candidates'][0]['content']['parts'][0]['text'] ) ) {
+            $result_text = $body['candidates'][0]['content']['parts'][0]['text'];
+        } elseif ( isset( $body['text'] ) ) {
+            $result_text = is_string( $body['text'] ) ? $body['text'] : wp_json_encode( $body['text'] );
+        } else {
+            error_log( 'GEO AI Meta Generation: Invalid response structure - ' . $raw_body );
             return new \WP_Error( 'api_error', __( 'Invalid API response structure.', 'geo-ai' ) );
         }
 
-        $result_text = $body['candidates'][0]['content']['parts'][0]['text'];
-        
         return $this->parse_meta_response( $result_text );
     }
 
@@ -395,21 +515,29 @@ Return the JSON now:',
         $response_text = preg_replace( '/```\s*$/', '', $response_text );
         $response_text = trim( $response_text );
 
-        // Extract JSON
-        $json_start = strpos( $response_text, '{' );
-        $json_end   = strrpos( $response_text, '}' );
-        
-        if ( false === $json_start || false === $json_end ) {
-            error_log( 'GEO AI Meta: No JSON found in response: ' . $response_text );
-            return new \WP_Error( 'parse_error', __( 'Could not extract JSON from API response.', 'geo-ai' ) );
+        if ( '' === $response_text ) {
+            return new \WP_Error( 'parse_error', __( 'API response was empty.', 'geo-ai' ) );
         }
 
-        $json = substr( $response_text, $json_start, $json_end - $json_start + 1 );
-        $data = json_decode( $json, true );
+        $data = json_decode( $response_text, true );
 
-        if ( json_last_error() !== JSON_ERROR_NONE ) {
-            error_log( 'GEO AI Meta: JSON parse error: ' . json_last_error_msg() . ' - JSON: ' . $json );
-            return new \WP_Error( 'parse_error', __( 'Could not parse API response as JSON.', 'geo-ai' ) );
+        if ( json_last_error() !== JSON_ERROR_NONE || ! is_array( $data ) ) {
+            // Extract JSON when additional text slips in.
+            $json_start = strpos( $response_text, '{' );
+            $json_end   = strrpos( $response_text, '}' );
+
+            if ( false === $json_start || false === $json_end ) {
+                error_log( 'GEO AI Meta: No JSON found in response: ' . $response_text );
+                return new \WP_Error( 'parse_error', __( 'Could not extract JSON from API response.', 'geo-ai' ) );
+            }
+
+            $json = substr( $response_text, $json_start, $json_end - $json_start + 1 );
+            $data = json_decode( $json, true );
+
+            if ( json_last_error() !== JSON_ERROR_NONE ) {
+                error_log( 'GEO AI Meta: JSON parse error: ' . json_last_error_msg() . ' - JSON: ' . $json );
+                return new \WP_Error( 'parse_error', __( 'Could not parse API response as JSON.', 'geo-ai' ) );
+            }
         }
 
         // Validate structure
@@ -456,12 +584,22 @@ Return the JSON now:',
                 ),
                 'body'    => wp_json_encode(
                     array(
+                        'systemInstruction' => array(
+                            'parts' => array(
+                                array(
+                                    'text' => 'You are GEO AI, a WordPress SEO assistant. Only respond with valid JSON.'
+                                ),
+                            ),
+                        ),
                         'contents' => array(
                             array(
                                 'parts' => array(
                                     array( 'text' => $test_prompt ),
                                 ),
                             ),
+                        ),
+                        'generationConfig' => array(
+                            'responseMimeType' => 'application/json',
                         ),
                     )
                 ),
