@@ -186,20 +186,23 @@ class GeoAI_Admin {
         // Check if the value is already encrypted (comparing with stored value)
         $stored_key = get_option( 'geoai_api_key', '' );
         if ( ! empty( $stored_key ) ) {
-            try {
-                $decrypted_stored = $this->decrypt( $stored_key );
-            } catch ( \Exception $e ) {
-                error_log( 'GEO AI: Error decrypting stored API key during sanitization - ' . $e->getMessage() );
-                add_settings_error(
-                    'geoai_api_key',
-                    'decryption_error',
-                    __( 'Existing API key could not be decrypted. Please re-enter your key.', 'geo-ai' )
-                );
-                $decrypted_stored = '';
+            $decrypted_stored = '';
+            
+            // Check if stored value is plain text
+            if ( 0 === strpos( $stored_key, 'plain:' ) ) {
+                $decrypted_stored = substr( $stored_key, 6 );
+            } else {
+                // Try to decrypt
+                try {
+                    $decrypted_stored = $this->decrypt( $stored_key );
+                } catch ( \Exception $e ) {
+                    error_log( 'GEO AI: Error decrypting stored API key during sanitization - ' . $e->getMessage() );
+                    $decrypted_stored = '';
+                }
             }
 
             if ( $value === $decrypted_stored && ! empty( $stored_key ) ) {
-                // Value hasn't changed, return existing encrypted value
+                // Value hasn't changed, return existing value (encrypted or plain)
                 return $stored_key;
             }
         }
@@ -208,14 +211,16 @@ class GeoAI_Admin {
         try {
             return $this->encrypt( $value );
         } catch ( \Exception $e ) {
-            // Log error and return empty string to prevent crash
-            error_log( 'GEO AI: Error encrypting API key - ' . $e->getMessage() );
+            // Log error and fallback to plain text storage
+            error_log( 'GEO AI: Error encrypting API key, using plain text fallback - ' . $e->getMessage() );
             add_settings_error(
                 'geoai_api_key',
-                'encryption_error',
-                __( 'Error encrypting API key. Please check server configuration.', 'geo-ai' )
+                'encryption_warning',
+                __( 'API key saved but encryption is unavailable. Consider installing the Sodium extension for better security.', 'geo-ai' ),
+                'warning'
             );
-            return '';
+            // Store with marker to indicate it's plain text
+            return 'plain:' . $value;
         }
     }
 
@@ -419,17 +424,22 @@ class GeoAI_Admin {
         
         // Safely decrypt the API key
         if ( ! empty( $api_key ) ) {
-            try {
-                $decrypted_key = $this->decrypt( $api_key );
-            } catch ( \Exception $e ) {
-                error_log( 'GEO AI: Error decrypting API key - ' . $e->getMessage() );
-                add_settings_error(
-                    'geoai_api_key',
-                    'decryption_error_display',
-                    __( 'Stored API key could not be decrypted. Please re-enter your key.', 'geo-ai' ),
-                    'error'
-                );
-                $decrypted_key = '';
+            // Check if it's plain text storage (fallback when encryption fails)
+            if ( 0 === strpos( $api_key, 'plain:' ) ) {
+                $decrypted_key = substr( $api_key, 6 ); // Remove 'plain:' prefix
+            } else {
+                try {
+                    $decrypted_key = $this->decrypt( $api_key );
+                } catch ( \Exception $e ) {
+                    error_log( 'GEO AI: Error decrypting API key - ' . $e->getMessage() );
+                    add_settings_error(
+                        'geoai_api_key',
+                        'decryption_error_display',
+                        __( 'Stored API key could not be decrypted. Please re-enter your key.', 'geo-ai' ),
+                        'error'
+                    );
+                    $decrypted_key = '';
+                }
             }
         }
 
