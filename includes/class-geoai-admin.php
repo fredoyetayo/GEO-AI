@@ -171,7 +171,7 @@ class GeoAI_Admin {
     }
 
     /**
-     * Sanitize and encrypt API key.
+     * Sanitize API key.
      *
      * @param string $value The API key value.
      * @return string
@@ -181,47 +181,9 @@ class GeoAI_Admin {
             return '';
         }
 
-        $value = sanitize_text_field( $value );
-
-        // Check if the value is already encrypted (comparing with stored value)
-        $stored_key = get_option( 'geoai_api_key', '' );
-        if ( ! empty( $stored_key ) ) {
-            $decrypted_stored = '';
-            
-            // Check if stored value is plain text
-            if ( 0 === strpos( $stored_key, 'plain:' ) ) {
-                $decrypted_stored = substr( $stored_key, 6 );
-            } else {
-                // Try to decrypt
-                try {
-                    $decrypted_stored = $this->decrypt( $stored_key );
-                } catch ( \Exception $e ) {
-                    error_log( 'GEO AI: Error decrypting stored API key during sanitization - ' . $e->getMessage() );
-                    $decrypted_stored = '';
-                }
-            }
-
-            if ( $value === $decrypted_stored && ! empty( $stored_key ) ) {
-                // Value hasn't changed, return existing value (encrypted or plain)
-                return $stored_key;
-            }
-        }
-
-        // Encrypt the new value
-        try {
-            return $this->encrypt( $value );
-        } catch ( \Exception $e ) {
-            // Log error and fallback to plain text storage
-            error_log( 'GEO AI: Error encrypting API key, using plain text fallback - ' . $e->getMessage() );
-            add_settings_error(
-                'geoai_api_key',
-                'encryption_warning',
-                __( 'API key saved but encryption is unavailable. Consider installing the Sodium extension for better security.', 'geo-ai' ),
-                'warning'
-            );
-            // Store with marker to indicate it's plain text
-            return 'plain:' . $value;
-        }
+        // Simple sanitization - store as plain text
+        // TODO: Add encryption once core functionality is verified
+        return sanitize_text_field( $value );
     }
 
     public function enqueue_admin_assets( $hook ) {
@@ -420,29 +382,6 @@ class GeoAI_Admin {
 
     private function render_general_tab() {
         $api_key          = get_option( 'geoai_api_key', '' );
-        $decrypted_key    = '';
-        
-        // Safely decrypt the API key
-        if ( ! empty( $api_key ) ) {
-            // Check if it's plain text storage (fallback when encryption fails)
-            if ( 0 === strpos( $api_key, 'plain:' ) ) {
-                $decrypted_key = substr( $api_key, 6 ); // Remove 'plain:' prefix
-            } else {
-                try {
-                    $decrypted_key = $this->decrypt( $api_key );
-                } catch ( \Exception $e ) {
-                    error_log( 'GEO AI: Error decrypting API key - ' . $e->getMessage() );
-                    add_settings_error(
-                        'geoai_api_key',
-                        'decryption_error_display',
-                        __( 'Stored API key could not be decrypted. Please re-enter your key.', 'geo-ai' ),
-                        'error'
-                    );
-                    $decrypted_key = '';
-                }
-            }
-        }
-
         $autorun          = get_option( 'geoai_autorun_on_save', false );
         $compat_mode      = get_option( 'geoai_compat_mode', 'standalone' );
         ?>
@@ -452,14 +391,14 @@ class GeoAI_Admin {
                     <label for="geoai_api_key"><?php esc_html_e( 'Google Gemini API Key', 'geo-ai' ); ?></label>
                 </th>
                 <td>
-                    <input type="text" id="geoai_api_key" name="geoai_api_key" value="<?php echo esc_attr( $decrypted_key ); ?>" class="regular-text" />
+                    <input type="text" id="geoai_api_key" name="geoai_api_key" value="<?php echo esc_attr( $api_key ); ?>" class="regular-text" />
                     <button type="button" id="geoai-test-api-btn" class="button button-secondary" style="margin-left: 10px;">
                         <span class="dashicons dashicons-yes-alt"></span>
                         <?php esc_html_e( 'Test Connection', 'geo-ai' ); ?>
                     </button>
                     <span id="geoai-test-api-status" style="margin-left: 10px; font-style: italic;"></span>
                     <p class="description">
-                        <?php esc_html_e( 'Your API key is encrypted when stored. Get one from ', 'geo-ai' ); ?>
+                        <?php esc_html_e( 'Get your free API key from ', 'geo-ai' ); ?>
                         <a href="https://ai.google.dev/gemini-api/docs/api-key" target="_blank"><?php esc_html_e( 'Google AI Studio', 'geo-ai' ); ?></a>.
                     </p>
                 </td>

@@ -107,24 +107,11 @@ class GeoAI_Analyzer {
     }
 
     private function get_api_key() {
-        $stored = get_option( 'geoai_api_key', '' );
+        $api_key = get_option( 'geoai_api_key', '' );
         
-        if ( empty( $stored ) ) {
-            return '';
-        }
-        
-        // Check if it's plain text storage (fallback when encryption fails)
-        if ( 0 === strpos( $stored, 'plain:' ) ) {
-            return substr( $stored, 6 ); // Remove 'plain:' prefix
-        }
-        
-        // Try to decrypt
-        try {
-            return $this->decrypt( $stored );
-        } catch ( \Exception $e ) {
-            error_log( 'GEO AI: Error decrypting API key - ' . $e->getMessage() );
-            return '';
-        }
+        // Simple retrieval - stored as plain text
+        // TODO: Add decryption once core functionality is verified
+        return trim( $api_key );
     }
 
     private function get_rendered_content( $post ) {
